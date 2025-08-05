@@ -141,7 +141,7 @@ class UniversityService {
       contact: '+226 25 30 70 64',
       email: 'info@ujkz.bf',
       address: '03 BP 7021 Ouagadougou 03',
-      imageUrl: 'https://example.com/ujkz.jpg',
+      imageUrl: 'https://images.unsplash.com/photo-1607013251379-e6eecfffe234?w=800&h=600&fit=crop&crop=faces',
       description:
           'La plus ancienne université du Burkina Faso, offrant une formation de qualité dans de nombreux domaines.',
       generalAdmissionRequirements: [
@@ -228,7 +228,7 @@ class UniversityService {
       contact: '+226 20 98 03 45',
       email: 'contact@univ-bobo.bf',
       address: '01 BP 1091 Bobo-Dioulasso 01',
-      imageUrl: 'https://example.com/upb.jpg',
+      imageUrl: 'https://images.unsplash.com/photo-1580537659466-0a9bfa916a54?w=800&h=600&fit=crop&crop=faces',
       description:
           'Université technique spécialisée dans les formations d\'ingénierie et d\'agriculture.',
       generalAdmissionRequirements: [
@@ -289,7 +289,7 @@ class UniversityService {
       contact: '+226 25 36 28 70',
       email: 'info@isc-bf.com',
       address: 'Secteur 4, Ouagadougou',
-      imageUrl: 'https://example.com/isc.jpg',
+      imageUrl: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&h=600&fit=crop&crop=faces',
       description:
           'École de commerce privée reconnue, formant les futurs leaders du monde des affaires.',
       generalAdmissionRequirements: [
@@ -301,6 +301,157 @@ class UniversityService {
       hasAccommodation: false,
       latitude: 12.3581,
       longitude: -1.5339,
+    ),
+
+    University(
+      id: 'univ_004',
+      name: 'École Nationale d\'Administration et de Magistrature',
+      city: 'Ouagadougou',
+      type: 'public',
+      programs: [
+        Program(
+          id: 'prog_administration',
+          name: 'Administration Publique',
+          description: 'Formation des cadres de l\'administration publique',
+          priceByLevel: {
+            'licence': 150000,
+            'master': 200000,
+          },
+          durationYears: 3,
+          admissionRequirements: [
+            'BAC toutes séries',
+            'Concours d\'entrée',
+            'Aptitudes physiques',
+          ],
+          career: 'Fonctionnaire, Administrateur, Gestionnaire public, Magistrat',
+          specialties: [
+            Specialty(
+              id: 'spec_admin_generale',
+              name: 'Administration Générale',
+              description: 'Formation polyvalente en administration',
+              specificRequirements: [
+                'Aptitudes organisationnelles',
+                'Sens des responsabilités',
+              ],
+            ),
+            Specialty(
+              id: 'spec_magistrature',
+              name: 'Magistrature',
+              description: 'Formation des magistrats',
+              priceByLevel: {
+                'master': 250000,
+              },
+              specificRequirements: [
+                'Licence en Droit',
+                'Concours très sélectif',
+              ],
+            ),
+          ],
+        ),
+      ],
+      website: 'https://www.enam.gov.bf',
+      contact: '+226 25 32 48 95',
+      email: 'contact@enam.gov.bf',
+      address: 'Secteur 4, Ouagadougou',
+      imageUrl: 'https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&h=600&fit=crop&crop=faces',
+      description: 'École prestigieuse formant les cadres de l\'administration et de la justice.',
+      generalAdmissionRequirements: [
+        'Réussite au concours d\'entrée',
+        'Aptitudes physiques et morales',
+      ],
+      hasScholarships: true,
+      hasAccommodation: true,
+      latitude: 12.3676,
+      longitude: -1.5144,
+    ),
+
+    University(
+      id: 'univ_005',
+      name: 'Institut Supérieur d\'Informatique et de Gestion',
+      city: 'Ouagadougou',
+      type: 'private',
+      programs: [
+        Program(
+          id: 'prog_informatique',
+          name: 'Sciences Informatiques',
+          description: 'Formation complète en informatique et nouvelles technologies',
+          priceByLevel: {
+            'licence': 650000,
+            'master': 850000,
+          },
+          durationYears: 3,
+          admissionRequirements: [
+            'BAC série C, D ou F',
+            'Bases en mathématiques',
+          ],
+          career: 'Développeur, Ingénieur logiciel, Chef de projet IT, Administrateur réseau',
+          specialties: [
+            Specialty(
+              id: 'spec_dev_logiciel',
+              name: 'Développement Logiciel',
+              description: 'Conception et développement d\'applications',
+              specificRequirements: [
+                'Logique algorithmique',
+                'Créativité technique',
+              ],
+            ),
+            Specialty(
+              id: 'spec_reseaux',
+              name: 'Réseaux et Télécommunications',
+              description: 'Administration et sécurité des réseaux',
+              priceByLevel: {
+                'licence': 600000,
+                'master': 800000,
+              },
+              specificRequirements: [
+                'Intérêt pour les infrastructures',
+                'Rigueur technique',
+              ],
+            ),
+          ],
+        ),
+        Program(
+          id: 'prog_gestion_moderne',
+          name: 'Gestion et Management Digital',
+          description: 'Management moderne avec outils numériques',
+          priceByLevel: {
+            'licence': 550000,
+            'master': 750000,
+          },
+          durationYears: 3,
+          admissionRequirements: [
+            'BAC toutes séries',
+            'Créativité et sens commercial',
+          ],
+          career: 'Community manager, Expert e-commerce, Consultant digital',
+          specialties: [
+            Specialty(
+              id: 'spec_marketing_digital',
+              name: 'Marketing Digital',
+              description: 'Stratégies marketing à l\'ère numérique',
+              specificRequirements: [
+                'Créativité',
+                'Maîtrise des réseaux sociaux',
+              ],
+            ),
+          ],
+        ),
+      ],
+      website: 'https://www.isig-bf.com',
+      contact: '+226 25 37 42 18',
+      email: 'info@isig-bf.com',
+      address: 'Zone du Bois, Ouagadougou',
+      imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&crop=faces',
+      description: 'Institut moderne spécialisé dans les technologies de l\'information et la gestion digitale.',
+      generalAdmissionRequirements: [
+        'BAC selon filière',
+        'Motivation pour le numérique',
+        'Capacité de financement',
+      ],
+      hasScholarships: false,
+      hasAccommodation: false,
+      latitude: 12.3892,
+      longitude: -1.4875,
     ),
   ];
 
