@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'screens/main_screen.dart';
+import 'services/admin_university_service.dart';
 
-void main() {
+void main() async {
+  // S'assurer que Flutter est initialisé
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Charger les universités personnalisées
+  await AdminUniversityService.loadCustomUniversities();
+  
   runApp(const OrientaApp());
 }
 

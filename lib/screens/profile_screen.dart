@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'auth_screen.dart';
+import 'admin_universities_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -259,6 +260,18 @@ class ProfileScreen extends StatelessWidget {
           'Changer vos informations personnelles',
           Icons.person,
           () => _showEditProfileDialog(context, provider),
+        ),
+        _buildOptionTile(
+          context,
+          'Administration',
+          'Gérer les universités (Admin)',
+          Icons.admin_panel_settings,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminUniversitiesScreen(),
+            ),
+          ),
         ),
         _buildOptionTile(
           context,

@@ -46,9 +46,11 @@ class University {
       name: json['name'],
       city: json['city'],
       type: json['type'],
-      programs: (json['programs'] as List?)
-          ?.map((s) => Program.fromJson(s))
-          .toList() ?? [],
+      programs:
+          (json['programs'] as List?)
+              ?.map((s) => Program.fromJson(s))
+              .toList() ??
+          [],
       tuitionFee: json['tuition_fee']?.toDouble(),
       website: json['website'],
       contact: json['contact'],
@@ -56,7 +58,8 @@ class University {
       address: json['address'],
       imageUrl: json['image_url'],
       description: json['description'],
-      generalAdmissionRequirements: json['general_admission_requirements'] != null 
+      generalAdmissionRequirements:
+          json['general_admission_requirements'] != null
           ? List<String>.from(json['general_admission_requirements'])
           : null,
       hasScholarships: json['has_scholarships'] ?? false,
@@ -106,16 +109,16 @@ class University {
   // Obtenir le prix minimum de l'université
   double? get minPrice {
     final allPrices = <double>[];
-    
+
     // Ajouter le prix de base si disponible
     if (tuitionFee != null) allPrices.add(tuitionFee!);
-    
+
     // Ajouter tous les prix des programmes
     for (final program in programs) {
       final programMin = program.minPrice;
       if (programMin != null) allPrices.add(programMin);
     }
-    
+
     if (allPrices.isEmpty) return null;
     return allPrices.reduce((a, b) => a < b ? a : b);
   }
@@ -123,16 +126,16 @@ class University {
   // Obtenir le prix maximum de l'université
   double? get maxPrice {
     final allPrices = <double>[];
-    
+
     // Ajouter le prix de base si disponible
     if (tuitionFee != null) allPrices.add(tuitionFee!);
-    
+
     // Ajouter tous les prix des programmes
     for (final program in programs) {
       final programMax = program.maxPrice;
       if (programMax != null) allPrices.add(programMax);
     }
-    
+
     if (allPrices.isEmpty) return null;
     return allPrices.reduce((a, b) => a > b ? a : b);
   }
@@ -148,33 +151,44 @@ class University {
 
   // Vérifier si une filière est disponible
   bool hasSpecialty(String specialtyName) {
-    return programs.any((p) => 
-      p.name.toLowerCase().contains(specialtyName.toLowerCase()) ||
-      p.specialtyNames.any((s) => s.toLowerCase().contains(specialtyName.toLowerCase()))
+    return programs.any(
+      (p) =>
+          p.name.toLowerCase().contains(specialtyName.toLowerCase()) ||
+          p.specialtyNames.any(
+            (s) => s.toLowerCase().contains(specialtyName.toLowerCase()),
+          ),
     );
   }
 
   // Obtenir un programme par nom
   Program? getProgram(String programName) {
     try {
-      return programs.firstWhere((p) => 
-        p.name.toLowerCase() == programName.toLowerCase()
+      return programs.firstWhere(
+        (p) => p.name.toLowerCase() == programName.toLowerCase(),
       );
     } catch (e) {
       return null;
     }
   }
 
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  double _calculateDistance(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     // Formule de Haversine simplifiée pour calculer la distance en km
     const double earthRadius = 6371;
     double dLat = _toRadians(lat2 - lat1);
     double dLon = _toRadians(lon2 - lon1);
-    
-    double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) * 
-        math.sin(dLon / 2) * math.sin(dLon / 2);
-    
+
+    double a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) *
+            math.cos(_toRadians(lat2)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+
     double c = 2 * math.asin(math.sqrt(a));
     return earthRadius * c;
   }

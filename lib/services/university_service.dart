@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import '../models/university.dart';
 import '../models/program.dart';
+import 'admin_university_service.dart';
 
 class UniversityService {
   // Données simulées des universités burkinabè avec la nouvelle structure Programme → Filières
@@ -455,31 +456,45 @@ class UniversityService {
     ),
   ];
 
-  // Obtenir toutes les universités
+  // Obtenir toutes les universités (codées en dur + personnalisées)
   Future<List<University>> getAllUniversities() async {
+    // Charger les universités personnalisées
+    await AdminUniversityService.loadCustomUniversities();
+    
     // Simulation d'un délai réseau
     await Future.delayed(const Duration(milliseconds: 500));
-    return List.from(_universitiesData);
+    
+    // Combiner les universités codées en dur avec les personnalisées
+    final customUniversities = AdminUniversityService.getCustomUniversities();
+    final allUniversities = [..._universitiesData, ...customUniversities];
+    
+    return allUniversities;
   }
 
-  // Obtenir une université par ID
+  // Obtenir une université par ID (codées en dur + personnalisées)
   Future<University?> getUniversityById(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
+    
+    // Chercher d'abord dans les universités codées en dur
     try {
       return _universitiesData.firstWhere((univ) => univ.id == id);
     } catch (e) {
-      return null;
+      // Si pas trouvé, chercher dans les universités personnalisées
+      await AdminUniversityService.loadCustomUniversities();
+      return AdminUniversityService.getUniversityById(id);
     }
   }
 
-  // Rechercher des universités par nom, ville ou domaine
+  // Rechercher des universités par nom, ville ou domaine (codées en dur + personnalisées)
   Future<List<University>> searchUniversities(String query) async {
     await Future.delayed(const Duration(milliseconds: 300));
 
     if (query.isEmpty) return getAllUniversities();
 
     final queryLower = query.toLowerCase();
-    return _universitiesData.where((univ) {
+    final allUniversities = await getAllUniversities();
+    
+    return allUniversities.where((univ) {
       return univ.name.toLowerCase().contains(queryLower) ||
           univ.city.toLowerCase().contains(queryLower) ||
           univ.programs.any(
@@ -492,7 +507,7 @@ class UniversityService {
     }).toList();
   }
 
-  // Filtrer les universités
+  // Filtrer les universités (codées en dur + personnalisées)
   Future<List<University>> filterUniversities({
     String? city,
     String? type,
@@ -504,7 +519,7 @@ class UniversityService {
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
 
-    List<University> filtered = List.from(_universitiesData);
+    List<University> filtered = await getAllUniversities();
 
     if (city != null && city.isNotEmpty) {
       filtered = filtered
