@@ -22,6 +22,11 @@ class UniversityService {
               name: 'Médecine Générale',
               description: 'Formation pour devenir médecin généraliste',
               specificRequirements: ['BAC série D ou C', 'Concours d\'entrée'],
+              priceByLevel: {
+                'licence': 150000, // Plus cher que la moyenne
+                'master': 200000,
+                'doctorat': 300000,
+              },
             ),
             Specialty(
               id: 'spec_chirurgie',
@@ -31,12 +36,21 @@ class UniversityService {
                 'Diplôme de médecine',
                 'Concours de spécialisation',
               ],
+              priceByLevel: {
+                'master': 250000, // Très cher pour spécialisation
+                'doctorat': 350000,
+              },
             ),
             Specialty(
               id: 'spec_pharmacie',
               name: 'Pharmacie',
               description: 'Formation en sciences pharmaceutiques',
               specificRequirements: ['BAC série D ou C', 'Concours d\'entrée'],
+              priceByLevel: {
+                'licence': 120000, // Moins cher que médecine
+                'master': 180000,
+                'doctorat': 250000,
+              },
             ),
           ],
           priceByLevel: {
@@ -89,17 +103,29 @@ class UniversityService {
               name: 'Informatique Fondamentale',
               description:
                   'Formation en développement et systèmes informatiques',
+              priceByLevel: {
+                'licence': 50000, // Moins cher, filière classique
+                'master': 70000,
+              },
             ),
             Specialty(
               id: 'spec_reseaux',
               name: 'Réseaux et Télécommunications',
               description: 'Spécialisation en infrastructure réseau',
+              priceByLevel: {
+                'licence': 65000, // Plus cher, équipements spécialisés
+                'master': 85000,
+              },
             ),
             Specialty(
               id: 'spec_cybersecurite',
               name: 'Cybersécurité',
               description:
                   'Formation en sécurité informatique et protection des données',
+              priceByLevel: {
+                'licence': 75000, // Le plus cher, haute technologie
+                'master': 100000,
+              },
             ),
           ],
           priceByLevel: {'licence': 60000, 'master': 80000},

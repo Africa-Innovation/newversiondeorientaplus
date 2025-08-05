@@ -15,6 +15,12 @@ class ProgramDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Trouver la filière spécifique
+    final specialty = program.specialties.firstWhere(
+      (s) => s.name == specialtyName,
+      orElse: () => program.specialties.first,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -44,7 +50,7 @@ class ProgramDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // En-tête avec niveau et prix
-            _buildHeader(context),
+            _buildHeader(context, specialty),
             
             const SizedBox(height: 24),
             
@@ -64,7 +70,7 @@ class ProgramDetailScreen extends StatelessWidget {
             // Informations pratiques
             _buildSection(
               'Informations pratiques',
-              _buildPracticalInfo(),
+              _buildPracticalInfo(specialty),
             ),
             
             const SizedBox(height: 24),
@@ -97,7 +103,7 @@ class ProgramDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, Specialty specialty) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -163,22 +169,58 @@ class ProgramDetailScreen extends StatelessWidget {
               color: Colors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.attach_money,
-                  color: Colors.white,
-                  size: 20,
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.attach_money,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Coûts pour ${specialty.name}:',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  program.priceRange,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                const SizedBox(height: 8),
+                // Utiliser les prix de la filière spécifique si disponibles, sinon ceux du programme
+                ...(specialty.priceByLevel?.entries ?? program.priceByLevel.entries).map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          specialty.getLevelLabel(entry.key),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          specialty.getFormattedPrice(entry.key) ?? 
+                              program.getFormattedPrice(entry.key) ?? 'N/A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ],
             ),
           ),
@@ -204,7 +246,7 @@ class ProgramDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPracticalInfo() {
+  Widget _buildPracticalInfo(Specialty specialty) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -217,7 +259,9 @@ class ProgramDetailScreen extends StatelessWidget {
           _buildInfoRow(
             Icons.school,
             'Niveaux disponibles',
-            program.availableLevels.join(", "),
+            (specialty.availableLevels.isNotEmpty 
+                ? specialty.availableLevels 
+                : program.availableLevels).join(", "),
           ),
           const SizedBox(height: 12),
           _buildInfoRow(
@@ -226,10 +270,41 @@ class ProgramDetailScreen extends StatelessWidget {
             '${program.durationYears} année(s)',
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(
-            Icons.attach_money,
-            'Coût annuel',
-            program.priceRange,
+          
+          // Coûts détaillés par niveau pour cette filière spécifique
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.attach_money, size: 20, color: Colors.grey[600]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Coûts pour ${specialty.name}:',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    ...(specialty.priceByLevel?.entries ?? program.priceByLevel.entries).map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          '${specialty.getLevelLabel(entry.key)}: ${specialty.getFormattedPrice(entry.key) ?? program.getFormattedPrice(entry.key)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

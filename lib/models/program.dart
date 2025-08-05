@@ -109,12 +109,14 @@ class Specialty {
   final String name;
   final String description;
   final List<String>? specificRequirements;
+  final Map<String, double>? priceByLevel; // Prix spécifiques par niveau pour cette filière
 
   Specialty({
     required this.id,
     required this.name,
     required this.description,
     this.specificRequirements,
+    this.priceByLevel,
   });
 
   factory Specialty.fromJson(Map<String, dynamic> json) {
@@ -125,6 +127,9 @@ class Specialty {
       specificRequirements: json['specificRequirements'] != null 
           ? List<String>.from(json['specificRequirements'])
           : null,
+      priceByLevel: json['priceByLevel'] != null 
+          ? Map<String, double>.from(json['priceByLevel'])
+          : null,
     );
   }
 
@@ -134,6 +139,45 @@ class Specialty {
       'name': name,
       'description': description,
       'specificRequirements': specificRequirements,
+      'priceByLevel': priceByLevel,
     };
+  }
+
+  // Méthodes utiles pour les prix de la filière
+  String? getFormattedPrice(String level) {
+    if (priceByLevel == null) return null;
+    final price = priceByLevel![level.toLowerCase()];
+    if (price == null) return null;
+    return '${_formatPrice(price)} FCFA/an';
+  }
+
+  String getLevelLabel(String level) {
+    switch (level.toLowerCase()) {
+      case 'licence':
+        return 'Licence (Bac+3)';
+      case 'master':
+        return 'Master (Bac+5)';
+      case 'doctorat':
+        return 'Doctorat (Bac+8)';
+      default:
+        return level;
+    }
+  }
+
+  String _formatPrice(double price) {
+    if (price >= 1000000) {
+      return '${(price / 1000000).toStringAsFixed(1)}M';
+    } else if (price >= 1000) {
+      return '${(price / 1000).toStringAsFixed(0)}K';
+    } else {
+      return price.toStringAsFixed(0);
+    }
+  }
+
+  List<String> get availableLevels {
+    if (priceByLevel == null) return [];
+    final levels = priceByLevel!.keys.toList();
+    levels.sort();
+    return levels;
   }
 }
