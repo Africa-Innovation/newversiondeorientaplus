@@ -129,7 +129,9 @@ class ProfileScreen extends StatelessWidget {
                   backgroundColor: Theme.of(context).primaryColor,
                   child: Text(
                     user.name?.substring(0, 1).toUpperCase() ?? 
-                    user.phoneNumber.substring(-2),
+                    (user.phoneNumber.length >= 2 
+                        ? user.phoneNumber.substring(user.phoneNumber.length - 2).toUpperCase()
+                        : user.phoneNumber.toUpperCase()),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -181,20 +183,6 @@ class ProfileScreen extends StatelessWidget {
             
             if (user.series != null) ...[
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Série ${user.series}',
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
             ],
           ],
         ),
@@ -274,13 +262,6 @@ class ProfileScreen extends StatelessWidget {
         ),
         _buildOptionTile(
           context,
-          'Mes intérêts',
-          'Gérer vos domaines d\'intérêt',
-          Icons.interests,
-          () => _showInterestsDialog(context, provider),
-        ),
-        _buildOptionTile(
-          context,
           'Paramètres de localisation',
           'Gérer vos préférences de localisation',
           Icons.location_on,
@@ -341,7 +322,6 @@ class ProfileScreen extends StatelessWidget {
   void _showEditProfileDialog(BuildContext context, AppProvider provider) {
     final nameController = TextEditingController(text: provider.currentUser?.name ?? '');
     final cityController = TextEditingController(text: provider.currentUser?.city ?? '');
-    String? selectedSeries = provider.currentUser?.series;
 
     showDialog(
       context: context,
@@ -366,21 +346,6 @@ class ProfileScreen extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedSeries,
-                decoration: const InputDecoration(
-                  labelText: 'Série du BAC',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((series) {
-                  return DropdownMenuItem(
-                    value: series,
-                    child: Text('Série $series'),
-                  );
-                }).toList(),
-                onChanged: (value) => setState(() => selectedSeries = value),
-              ),
             ],
           ),
           actions: [
@@ -393,60 +358,7 @@ class ProfileScreen extends StatelessWidget {
                 provider.updateProfile(
                   name: nameController.text.trim(),
                   city: cityController.text.trim(),
-                  series: selectedSeries,
                 );
-                Navigator.pop(context);
-              },
-              child: const Text('Sauvegarder'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showInterestsDialog(BuildContext context, AppProvider provider) {
-    final availableInterests = [
-      'Informatique', 'Médecine', 'Ingénierie', 'Commerce', 'Droit',
-      'Sciences', 'Agriculture', 'Arts', 'Communication', 'Finance'
-    ];
-    final selectedInterests = List<String>.from(provider.currentUser?.interests ?? []);
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Mes intérêts'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView(
-              shrinkWrap: true,
-              children: availableInterests.map((interest) {
-                final isSelected = selectedInterests.contains(interest);
-                return CheckboxListTile(
-                  title: Text(interest),
-                  value: isSelected,
-                  onChanged: (value) {
-                    setState(() {
-                      if (value!) {
-                        selectedInterests.add(interest);
-                      } else {
-                        selectedInterests.remove(interest);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                provider.updateProfile(interests: selectedInterests);
                 Navigator.pop(context);
               },
               child: const Text('Sauvegarder'),
