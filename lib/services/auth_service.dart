@@ -1,83 +1,168 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
 import '../models/user_profile.dart';
 
 class AuthService {
   static const String _userKey = 'current_user';
-  static const String _otpKey = 'pending_otp';
+  static const String _verificationKey = 'verification_key';
+  
+  // Configuration de l'API Ikoddi
+  static const String _baseUrl = 'https://api.ikoddi.com/api/v1';
+  static const String _groupId = '10275657';
+  static const String _providerId = 'cm3m40nas0rces601ty9i66tz';
+  static const String _apiKey = 'sPdb1lqIoWJzqhlwBrmGxqQ0qmEdR1BJ';
 
-  // Simuler l'envoi d'OTP (en production, utiliser Firebase Auth ou un service SMS)
+  // Envoyer un OTP via l'API Ikoddi
   Future<bool> sendOTP(String phoneNumber) async {
     try {
-      // Générer un OTP aléatoire
-      final random = Random();
-      final otp = (1000 + random.nextInt(9000)).toString();
+      // Formater le numéro de téléphone (s'assurer qu'il commence par +226)
+      String formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith('+')) {
+        // Si le numéro commence par 226, ajouter le +
+        if (phoneNumber.startsWith('226')) {
+          formattedPhone = '+$phoneNumber';
+        } else {
+          // Sinon, ajouter +226
+          formattedPhone = '+226$phoneNumber';
+        }
+      }
       
-      // Stocker l'OTP temporairement
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_otpKey, jsonEncode({
-        'phone': phoneNumber,
-        'otp': otp,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      }));
+      final url = '$_baseUrl/groups/$_groupId/otp/$_providerId/sms/$formattedPhone';
       
-      // En mode développement, afficher l'OTP dans la console
-      print('OTP pour $phoneNumber: $otp');
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
       
-      return true;
+      print('Réponse envoi OTP: ${response.statusCode} - ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        
+        // Stocker la clé de vérification
+        if (responseData['otpToken'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_verificationKey, jsonEncode({
+            'phone': formattedPhone,
+            'verificationKey': responseData['otpToken'], // Utiliser otpToken comme verificationKey
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          }));
+          print('Clé de vérification stockée pour: $formattedPhone');
+        } else {
+          print('Aucun otpToken reçu dans la réponse');
+        }
+        
+        return true;
+      } else {
+        print('Erreur API envoi OTP: ${response.statusCode} - ${response.body}');
+        return false;
+      }
     } catch (e) {
       print('Erreur envoi OTP: $e');
       return false;
     }
   }
 
-  // Vérifier l'OTP et créer/connecter l'utilisateur
+  // Vérifier l'OTP via l'API Ikoddi
   Future<UserProfile?> verifyOTP(String phoneNumber, String otp) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final otpData = prefs.getString(_otpKey);
+      final verificationData = prefs.getString(_verificationKey);
       
-      if (otpData == null) return null;
+      print('Données de vérification trouvées: $verificationData');
       
-      final otpInfo = jsonDecode(otpData);
-      final storedPhone = otpInfo['phone'];
-      final storedOtp = otpInfo['otp'];
-      final timestamp = otpInfo['timestamp'];
-      
-      // Vérifier la validité de l'OTP (5 minutes)
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final isExpired = (now - timestamp) > (5 * 60 * 1000);
-      
-      if (storedPhone != phoneNumber || storedOtp != otp || isExpired) {
+      if (verificationData == null) {
+        print('Aucune clé de vérification trouvée');
         return null;
       }
       
-      // OTP valide, créer ou récupérer l'utilisateur
-      UserProfile user;
-      final existingUserData = await _getUserByPhone(phoneNumber);
+      final verificationInfo = jsonDecode(verificationData);
+      final verificationKey = verificationInfo['verificationKey'];
+      final timestamp = verificationInfo['timestamp'];
       
-      if (existingUserData != null) {
-        user = existingUserData;
-      } else {
-        // Créer un nouveau utilisateur
-        user = UserProfile(
-          id: _generateUserId(),
-          phoneNumber: phoneNumber,
-          lastLoginDate: DateTime.now(),
-        );
+      // Vérifier l'expiration (10 minutes)
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final isExpired = (now - timestamp) > (10 * 60 * 1000);
+      
+      if (isExpired) {
+        print('Clé de vérification expirée');
+        await prefs.remove(_verificationKey);
+        return null;
       }
       
-      // Mettre à jour la date de dernière connexion
-      user = user.copyWith(lastLoginDate: DateTime.now());
+      // Formater le numéro de téléphone
+      String formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith('+')) {
+        if (phoneNumber.startsWith('226')) {
+          formattedPhone = '+$phoneNumber';
+        } else {
+          formattedPhone = '+226$phoneNumber';
+        }
+      }
       
-      // Sauvegarder l'utilisateur
-      await _saveUser(user);
+      // Appel API pour vérifier l'OTP
+      final url = '$_baseUrl/groups/$_groupId/otp/$_providerId/verify';
       
-      // Nettoyer l'OTP
-      await prefs.remove(_otpKey);
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'verificationKey': verificationKey,
+          'otp': otp,
+          'identity': formattedPhone,
+        }),
+      );
       
-      return user;
+      print('Réponse vérification OTP: ${response.statusCode} - ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Vérifier aussi le status dans la réponse JSON
+        final responseData = jsonDecode(response.body);
+        if (responseData['status'] == 0) { // status 0 = succès selon l'API Ikoddi
+          // OTP valide, créer ou récupérer l'utilisateur
+          UserProfile user;
+          final existingUserData = await _getUserByPhone(formattedPhone);
+          
+          if (existingUserData != null) {
+            user = existingUserData;
+          } else {
+            // Créer un nouveau utilisateur
+            user = UserProfile(
+              id: _generateUserId(),
+              phoneNumber: formattedPhone,
+              lastLoginDate: DateTime.now(),
+            );
+          }
+          
+          // Mettre à jour la date de dernière connexion
+          user = user.copyWith(lastLoginDate: DateTime.now());
+          
+          // Sauvegarder l'utilisateur
+          await _saveUser(user);
+          
+          // Nettoyer la clé de vérification
+          await prefs.remove(_verificationKey);
+          
+          print('Connexion réussie pour: $formattedPhone');
+          return user;
+        } else {
+          print('Erreur dans la réponse API: ${responseData['message'] ?? 'Status non-zéro'}');
+          return null;
+        }
+      } else {
+        print('Erreur API vérification OTP: ${response.statusCode} - ${response.body}');
+        return null;
+      }
     } catch (e) {
       print('Erreur vérification OTP: $e');
       return null;
@@ -109,6 +194,7 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
+    await prefs.remove(_verificationKey);
   }
 
   // Méthodes privées

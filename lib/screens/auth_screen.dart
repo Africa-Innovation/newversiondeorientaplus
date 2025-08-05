@@ -241,7 +241,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(4),
+              LengthLimitingTextInputFormatter(6),
             ],
             onChanged: (value) {
               if (_errorMessage != null) {
@@ -249,8 +249,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   _errorMessage = null;
                 });
               }
-              // Auto-verify when 4 digits are entered
-              if (value.length == 4) {
+              // Auto-verify when 6 digits are entered
+              if (value.length == 6) {
                 _verifyOTP();
               }
             },
@@ -388,9 +388,9 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
-    if (otp.length != 4) {
+    if (otp.length != 6) {
       setState(() {
-        _errorMessage = 'Le code doit contenir 4 chiffres';
+        _errorMessage = 'Le code doit contenir 6 chiffres';
       });
       return;
     }
