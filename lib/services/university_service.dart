@@ -468,6 +468,11 @@ class UniversityService {
     final customUniversities = AdminUniversityService.getCustomUniversities();
     final allUniversities = [..._universitiesData, ...customUniversities];
     
+    // Debug
+    print('📚 Universités codées en dur: ${_universitiesData.length}');
+    print('🎯 Universités personnalisées: ${customUniversities.length}');
+    print('📋 Total universités: ${allUniversities.length}');
+    
     return allUniversities;
   }
 

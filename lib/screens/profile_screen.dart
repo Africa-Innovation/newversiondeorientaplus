@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../models/university.dart';
+import '../models/program.dart';
+import '../services/admin_university_service.dart';
 import 'auth_screen.dart';
 import 'admin_universities_screen.dart';
 
@@ -273,6 +276,14 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
+        // Bouton de test temporaire
+        _buildOptionTile(
+          context,
+          '🧪 Créer université test',
+          'Test de création d\'université',
+          Icons.science,
+          () => _createTestUniversity(context, provider),
+        ),
         _buildOptionTile(
           context,
           'Paramètres de localisation',
@@ -297,6 +308,68 @@ class ProfileScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _createTestUniversity(BuildContext context, AppProvider provider) async {
+    try {
+      final testUniversity = University(
+        id: 'test_${DateTime.now().millisecondsSinceEpoch}',
+        name: 'Université Test ${DateTime.now().day}/${DateTime.now().month}',
+        city: 'Ouagadougou',
+        type: 'private',
+        programs: [
+          Program(
+            id: 'test_prog_${DateTime.now().millisecondsSinceEpoch}',
+            name: 'Programme Test',
+            description: 'Programme de test créé automatiquement',
+            specialties: [
+              Specialty(
+                id: 'test_spec_${DateTime.now().millisecondsSinceEpoch}',
+                name: 'Spécialité Test',
+                description: 'Spécialité de test',
+                priceByLevel: {
+                  'licence': 100000,
+                  'master': 150000,
+                },
+              ),
+            ],
+            priceByLevel: {'licence': 100000, 'master': 150000},
+            durationYears: 3,
+            admissionRequirements: ['BAC', 'Test d\'entrée'],
+            career: 'Testeur professionnel',
+          ),
+        ],
+        latitude: 12.3714,
+        longitude: -1.5197,
+        description: 'Université de test créée automatiquement',
+        hasScholarships: false,
+        hasAccommodation: false,
+      );
+
+      // Créer l'université
+      await AdminUniversityService.createUniversity(testUniversity);
+      
+      // Rafraîchir l'AppProvider
+      await provider.refreshUniversities();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Université test créée avec succès!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildOptionTile(

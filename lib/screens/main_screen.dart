@@ -54,6 +54,11 @@ class _MainScreenState extends State<MainScreen> {
             setState(() {
               _currentIndex = index;
             });
+            
+            // Rafraîchir les universités quand on revient sur l'accueil
+            if (index == 0) {
+              Provider.of<AppProvider>(context, listen: false).refreshUniversities();
+            }
           },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "612366433401",
+    "project_id": "orienta2025-3cdd7",
+    "storage_bucket": "orienta2025-3cdd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612366433401:android:8700310816c09fb1eea8a8",
+        "android_client_info": {
+          "package_name": "com.example.newversionorienta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdaB6CDtPzUa8BygCRZvwDrRNFMUV2r_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

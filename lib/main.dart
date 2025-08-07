@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
@@ -8,9 +10,31 @@ void main() async {
   // S'assurer que Flutter est initialisé
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialisation Firebase avec gestion d'erreurs
+  try {
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: "AIzaSyAqLUzTamS0BlpE7Ypo34Cxt12GoSfiWFM",
+          authDomain: "orienta2025-3cdd7.firebaseapp.com",
+          projectId: "orienta2025-3cdd7",
+          storageBucket: "orienta2025-3cdd7.firebasestorage.app",
+          messagingSenderId: "612366433401",
+          appId: "1:612366433401:web:c5df25a540477c34eea8a8",
+          measurementId: "G-9C6V0CJCX9",
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
+    print('✅ Firebase initialisé avec succès');
+  } catch (e) {
+    print('⚠️ Erreur Firebase: $e - L\'app fonctionnera en mode offline');
+  }
+  
   // Charger les universités personnalisées
   await AdminUniversityService.loadCustomUniversities();
-  
+
   runApp(const OrientaApp());
 }
 
@@ -26,7 +50,9 @@ class OrientaApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2E7D32), // Vert pour représenter l'espoir et la croissance
+            seedColor: const Color(
+              0xFF2E7D32,
+            ), // Vert pour représenter l'espoir et la croissance
             brightness: Brightness.light,
           ),
           useMaterial3: true,

@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/university.dart';
 import '../models/program.dart';
 import '../services/admin_university_service.dart';
+import '../services/firebase_university_service.dart';
+import '../services/image_api_service.dart';
+import '../providers/app_provider.dart';
 
 class AdminUniversityFormScreen extends StatefulWidget {
   final University? university; // null pour création, non-null pour édition
@@ -27,7 +36,6 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
   late TextEditingController _contactController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
-  late TextEditingController _imageUrlController;
   late TextEditingController _descriptionController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
@@ -40,6 +48,9 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
   List<Program> _programs = [];
 
   bool _isLoading = false;
+  bool _isUploadingImage = false;
+  File? _selectedImage;
+  String? _uploadedImageUrl;
 
   @override
   void initState() {
@@ -57,7 +68,6 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
     _contactController = TextEditingController();
     _emailController = TextEditingController();
     _addressController = TextEditingController();
-    _imageUrlController = TextEditingController();
     _descriptionController = TextEditingController();
     _latitudeController = TextEditingController();
     _longitudeController = TextEditingController();
@@ -74,7 +84,7 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
     _contactController.text = university.contact ?? '';
     _emailController.text = university.email ?? '';
     _addressController.text = university.address ?? '';
-    _imageUrlController.text = university.imageUrl ?? '';
+    _uploadedImageUrl = university.imageUrl;
     _descriptionController.text = university.description ?? '';
     _latitudeController.text = university.latitude.toString();
     _longitudeController.text = university.longitude.toString();
@@ -94,7 +104,6 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
     _contactController.dispose();
     _emailController.dispose();
     _addressController.dispose();
-    _imageUrlController.dispose();
     _descriptionController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
@@ -104,6 +113,179 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
   }
 
   bool get _isEditing => widget.university != null;
+
+  /// 📷 Sélectionner une image depuis la galerie
+  Future<void> _pickImageFromGallery() async {
+    if (kIsWeb) {
+      // Pour le web, utiliser file_picker
+      await _pickImageForWeb();
+    } else {
+      // Pour mobile, utiliser image_picker
+      await _pickImageForMobile(ImageSource.gallery);
+    }
+  }
+
+  /// 📸 Prendre une photo avec la caméra
+  Future<void> _pickImageFromCamera() async {
+    if (kIsWeb) {
+      _showErrorSnackBar('Prise de photo non supportée sur le web. Utilisez "Sélectionner image".');
+      return;
+    } else {
+      // Pour mobile, utiliser image_picker
+      await _pickImageForMobile(ImageSource.camera);
+    }
+  }
+
+  /// 🌐 Sélection d'image pour le web
+  Future<void> _pickImageForWeb() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true, // Important pour obtenir les bytes
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        final file = result.files.single;
+        final bytes = file.bytes!;
+        final fileName = file.name;
+        
+        print('📁 Fichier web sélectionné: $fileName (${bytes.length} bytes)');
+        
+        // Upload directement depuis les bytes
+        await _uploadImageFromBytes(bytes, fileName);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Erreur lors de la sélection de l\'image: $e');
+    }
+  }
+
+  /// � Sélection d'image pour mobile
+  Future<void> _pickImageForMobile(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+        await _uploadSelectedImage();
+      }
+    } catch (e) {
+      _showErrorSnackBar('Erreur lors de la sélection de l\'image: $e');
+    }
+  }
+
+  /// 🌐 Upload d'image depuis des bytes (pour le web)
+  Future<void> _uploadImageFromBytes(Uint8List bytes, String fileName) async {
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      print('🚀 Upload image web vers API Laravel...');
+      
+      final universityName = _nameController.text.trim();
+      final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      final response = await ImageApiService.uploadImageFromBytes(
+        bytes,
+        fileName,
+        altText: 'Image de $universityName',
+        universityId: widget.university?.id ?? tempId,
+      );
+
+      if (response.success && response.data != null) {
+        setState(() {
+          _uploadedImageUrl = response.data!.url;
+        });
+        _showSuccessSnackBar('✅ Image uploadée avec succès!');
+        print('✅ URL de l\'image: ${response.data!.url}');
+      } else {
+        _showErrorSnackBar('❌ Erreur upload: ${response.message}');
+      }
+    } catch (e) {
+      _showErrorSnackBar('❌ Erreur lors de l\'upload: $e');
+    } finally {
+      setState(() {
+        _isUploadingImage = false;
+      });
+    }
+  }
+
+  /// ☁️ Upload de l'image sélectionnée vers l'API Laravel
+  Future<void> _uploadSelectedImage() async {
+    if (_selectedImage == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final universityName = _nameController.text.trim();
+      final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      final response = await ImageApiService.uploadUniversityImage(
+        _selectedImage!,
+        altText: 'Image de $universityName',
+        universityId: widget.university?.id ?? tempId,
+      );
+
+      if (response.success && response.data != null) {
+        setState(() {
+          _uploadedImageUrl = response.data!.url;
+        });
+        _showSuccessSnackBar('Image uploadée avec succès!');
+      } else {
+        throw Exception(response.message);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Erreur lors de l\'upload: $e');
+      setState(() {
+        _selectedImage = null;
+      });
+    } finally {
+      setState(() {
+        _isUploadingImage = false;
+      });
+    }
+  }
+
+  /// 🗑️ Supprimer l'image
+  Future<void> _removeImage() async {
+    setState(() {
+      _selectedImage = null;
+      _uploadedImageUrl = null;
+    });
+  }
+
+  /// 📤 Afficher message de succès
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// ❌ Afficher message d'erreur
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   Future<void> _saveUniversity() async {
     if (!_formKey.currentState!.validate()) {
@@ -144,7 +326,7 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
         contact: _contactController.text.isEmpty ? null : _contactController.text.trim(),
         email: _emailController.text.isEmpty ? null : _emailController.text.trim(),
         address: _addressController.text.isEmpty ? null : _addressController.text.trim(),
-        imageUrl: _imageUrlController.text.isEmpty ? null : _imageUrlController.text.trim(),
+        imageUrl: _uploadedImageUrl,
         description: _descriptionController.text.isEmpty ? null : _descriptionController.text.trim(),
         generalAdmissionRequirements: _generalAdmissionRequirements.isEmpty ? null : _generalAdmissionRequirements,
         hasScholarships: _hasScholarships,
@@ -159,6 +341,12 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
 
       if (_isEditing) {
         await AdminUniversityService.updateUniversity(university);
+        // Essayer de sauvegarder dans Firebase (avec fallback)
+        try {
+          await FirebaseUniversityService.updateUniversity(university);
+        } catch (e) {
+          debugPrint('⚠️ Firebase indisponible pour la mise à jour: $e');
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -169,6 +357,12 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
         }
       } else {
         await AdminUniversityService.createUniversity(university);
+        // Essayer de sauvegarder dans Firebase (avec fallback)
+        try {
+          await FirebaseUniversityService.saveUniversity(university);
+        } catch (e) {
+          debugPrint('⚠️ Firebase indisponible pour la sauvegarde: $e');
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -177,6 +371,12 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
             ),
           );
         }
+      }
+
+      // Rafraîchir les universités dans l'AppProvider
+      if (mounted) {
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        await appProvider.refreshUniversities();
       }
 
       if (mounted) {
@@ -419,22 +619,138 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
               maxLines: 3,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _imageUrlController,
-              decoration: const InputDecoration(
-                labelText: 'URL de l\'image',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.image),
+            
+            // Section pour l'image
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Image de l\'université',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Affichage de l'image actuelle ou sélectionnée
+                    if (_selectedImage != null)
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImage!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                    else if (_uploadedImageUrl != null && _uploadedImageUrl!.isNotEmpty)
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _uploadedImageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey.shade200,
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  size: 50,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                          color: Colors.grey.shade100,
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_outlined,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Aucune image sélectionnée',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Boutons pour gérer l'image - Maintenant disponible sur web et mobile !
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isUploadingImage ? null : _pickImageFromGallery,
+                            icon: Icon(kIsWeb ? Icons.upload_file : Icons.photo_library),
+                            label: Text(kIsWeb ? 'Sélectionner image' : 'Galerie'),
+                          ),
+                        ),
+                        if (!kIsWeb) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isUploadingImage ? null : _pickImageFromCamera,
+                              icon: const Icon(Icons.camera_alt),
+                              label: const Text('Caméra'),
+                            ),
+                          ),
+                        ],
+                        if (_selectedImage != null || _uploadedImageUrl != null) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isUploadingImage ? null : _removeImage,
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              label: const Text(
+                                'Supprimer',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    
+                    if (_isUploadingImage)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: LinearProgressIndicator(),
+                      ),
+                  ],
+                ),
               ),
-              validator: (value) {
-                if (value != null && value.isNotEmpty) {
-                  final uri = Uri.tryParse(value);
-                  if (uri == null || !uri.isAbsolute) {
-                    return 'URL invalide';
-                  }
-                }
-                return null;
-              },
             ),
           ],
         ),

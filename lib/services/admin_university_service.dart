@@ -18,9 +18,12 @@ class AdminUniversityService {
         _customUniversities = universitiesList
             .map((json) => University.fromJson(json))
             .toList();
+        print('✅ Chargé ${_customUniversities.length} universités personnalisées');
+      } else {
+        print('ℹ️ Aucune université personnalisée trouvée dans le stockage');
       }
     } catch (e) {
-      print('Erreur lors du chargement des universités: $e');
+      print('❌ Erreur lors du chargement des universités: $e');
       _customUniversities = [];
     }
   }
@@ -53,6 +56,7 @@ class AdminUniversityService {
 
     _customUniversities.add(university);
     await saveCustomUniversities();
+    print('🎉 Université créée: ${university.name} (Total: ${_customUniversities.length})');
   }
 
   /// Met à jour une université existante

@@ -3,6 +3,7 @@ import '../models/university.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/university_service.dart';
+import '../services/firebase_university_service.dart';
 
 class AppProvider with ChangeNotifier {
   // User State
@@ -128,11 +129,53 @@ class AppProvider with ChangeNotifier {
   // University Methods
   Future<void> _loadUniversities() async {
     try {
-      _allUniversities = await _universityService.getAllUniversities();
+      // Charger les universités depuis le service principal (qui combine hardcoded + custom)
+      List<University> standardUniversities = await _universityService.getAllUniversities();
+      
+      // Essayer de charger depuis Firebase (avec fallback)
+      List<University> firebaseUniversities = [];
+      try {
+        firebaseUniversities = await FirebaseUniversityService.getAllUniversities();
+      } catch (e) {
+        debugPrint('⚠️ Firebase indisponible, mode offline: $e');
+      }
+      
+      // Combiner les deux listes en évitant les doublons
+      Set<String> existingIds = standardUniversities.map((u) => u.id).toSet();
+      List<University> combinedUniversities = List.from(standardUniversities);
+      
+      for (University university in firebaseUniversities) {
+        if (!existingIds.contains(university.id)) {
+          combinedUniversities.add(university);
+        }
+      }
+      
+      _allUniversities = combinedUniversities;
       _applyFilters();
+      debugPrint('🎯 AppProvider: ${_allUniversities.length} universités chargées (${standardUniversities.length} standards + ${firebaseUniversities.length} Firebase)');
     } catch (e) {
       debugPrint('Erreur chargement universités: $e');
+      // Fallback vers les universités standards uniquement
+      try {
+        _allUniversities = await _universityService.getAllUniversities();
+        _applyFilters();
+        debugPrint('🔄 Fallback: ${_allUniversities.length} universités standards chargées');
+      } catch (fallbackError) {
+        debugPrint('Erreur fallback: $fallbackError');
+      }
     }
+  }
+
+  /// Recharge les universités (public pour être appelé après création/modification)
+  Future<void> refreshUniversities() async {
+    _isLoading = true;
+    notifyListeners();
+    
+    await _loadUniversities();
+    await _loadFavorites();
+    
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> _loadFavorites() async {

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/university.dart';
 import '../services/admin_university_service.dart';
+import '../providers/app_provider.dart';
 import 'admin_university_form_screen.dart';
 import 'university_detail_screen.dart';
+import 'test_api_screen.dart';
 
 class AdminUniversitiesScreen extends StatefulWidget {
   const AdminUniversitiesScreen({super.key});
@@ -51,6 +54,12 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
 
       await AdminUniversityService.deleteUniversity(universityId);
       await _loadUniversities();
+
+      // Rafraîchir les universités dans l'AppProvider
+      if (mounted) {
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        await appProvider.refreshUniversities();
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,6 +145,16 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
         backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TestApiScreen()),
+              );
+            },
+            icon: const Icon(Icons.api),
+            tooltip: 'Tester API',
+          ),
           IconButton(
             onPressed: _loadUniversities,
             icon: const Icon(Icons.refresh),
