@@ -149,4 +149,34 @@ class FirebaseUserService {
       throw Exception('Impossible de supprimer l\'utilisateur: $e');
     }
   }
+
+  /// 🔥 NOUVEAU: Rechercher un utilisateur par numéro de téléphone
+  static Future<UserProfile?> getUserByPhone(String phoneNumber) async {
+    try {
+      print('🔥 Recherche utilisateur par téléphone dans Firebase...');
+      print('   Téléphone: $phoneNumber');
+      
+      final querySnapshot = await _firestore
+          .collection(_usersCollection)
+          .where('phone_number', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isNotEmpty) {
+        final userData = querySnapshot.docs.first.data();
+        final userProfile = UserProfile.fromJson(userData);
+        print('✅ Utilisateur trouvé dans Firebase');
+        print('   User ID: ${userProfile.id}');
+        print('   Nom: ${userProfile.name}');
+        print('   Favoris: ${userProfile.favoriteUniversities.length}');
+        return userProfile;
+      } else {
+        print('ℹ️ Aucun utilisateur trouvé avec ce numéro');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Erreur recherche utilisateur par téléphone: $e');
+      return null;
+    }
+  }
 }

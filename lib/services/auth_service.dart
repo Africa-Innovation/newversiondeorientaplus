@@ -259,8 +259,18 @@ class AuthService {
   }
 
   Future<UserProfile?> _getUserByPhone(String phoneNumber) async {
-    // En production, ceci ferait appel à une base de données
-    // Pour le MVP, on vérifie juste s'il y a un utilisateur local
+    // 🔥 NOUVEAU: Chercher d'abord dans Firebase
+    try {
+      UserProfile? firebaseUser = await FirebaseUserService.getUserByPhone(phoneNumber);
+      if (firebaseUser != null) {
+        print('✅ Utilisateur existant trouvé dans Firebase');
+        return firebaseUser;
+      }
+    } catch (e) {
+      print('⚠️ Impossible de chercher dans Firebase: $e');
+    }
+    
+    // Fallback: chercher localement
     final currentUser = await getCurrentUser();
     if (currentUser?.phoneNumber == phoneNumber) {
       return currentUser;

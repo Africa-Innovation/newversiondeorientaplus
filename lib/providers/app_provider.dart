@@ -210,10 +210,20 @@ class AppProvider with ChangeNotifier {
 
   Future<void> _loadFavorites() async {
     if (_currentUser != null) {
+      print('🔄 Chargement des favoris...');
+      print('   User ID: ${_currentUser!.id}');
+      print('   Favoris dans profil: ${_currentUser!.favoriteUniversities}');
+      
       // Filtrer les universités favorites à partir de toutes les universités
       _favoriteUniversities = _allUniversities
           .where((univ) => _currentUser!.favoriteUniversities.contains(univ.id))
           .toList();
+      
+      print('✅ Favoris chargés: ${_favoriteUniversities.length} universités');
+      for (var fav in _favoriteUniversities) {
+        print('   - ${fav.name}');
+      }
+      
       notifyListeners();
     }
   }
