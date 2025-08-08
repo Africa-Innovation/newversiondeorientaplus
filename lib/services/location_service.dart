@@ -79,6 +79,35 @@ class LocationService {
     }
   }
 
+  /// Obtenir le nom de la ville à partir des coordonnées
+  static Future<String?> getCityFromCoordinates(double latitude, double longitude) async {
+    try {
+      print('🌍 Géocodage inverse: $latitude, $longitude');
+      
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      
+      if (placemarks.isNotEmpty) {
+        Placemark placemark = placemarks.first;
+        
+        // Essayer différents niveaux de localisation
+        String? city = placemark.locality ?? 
+                      placemark.subAdministrativeArea ?? 
+                      placemark.administrativeArea ?? 
+                      placemark.country;
+        
+        print('✅ Ville trouvée: $city');
+        return city;
+      }
+      
+      print('❌ Aucune ville trouvée');
+      return null;
+      
+    } catch (e) {
+      print('❌ Erreur géocodage inverse: $e');
+      return null;
+    }
+  }
+
   /// Obtenir la position sauvegardée
   static Position? get currentPosition => _currentPosition;
 

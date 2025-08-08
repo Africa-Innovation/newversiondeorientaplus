@@ -380,6 +380,18 @@ class AppProvider with ChangeNotifier {
         _locationPermissionGranted = true;
         
         print('✅ Position utilisateur sauvegardée: $_userLatitude, $_userLongitude');
+        
+        // Récupérer le nom de la ville
+        String? cityName = await LocationService.getCityFromCoordinates(
+          position.latitude, 
+          position.longitude
+        );
+        
+        if (cityName != null) {
+          _userCity = cityName;
+          print('✅ Ville détectée: $_userCity');
+        }
+        
         notifyListeners();
         return true;
       } else {
