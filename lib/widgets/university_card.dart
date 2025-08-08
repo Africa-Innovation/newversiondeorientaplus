@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/university.dart';
 
 class UniversityCard extends StatelessWidget {
@@ -45,23 +44,56 @@ class UniversityCard extends StatelessWidget {
                 width: double.infinity,
                 color: Colors.grey[200],
                 child: university.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: university.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(
-                            Icons.school,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
-                        ),
+                    ? Builder(
+                        builder: (context) {
+                          print('🖼️ Test CORS - Image pour ${university.name}:');
+                          print('   URL: ${university.imageUrl}');
+                          
+                          return Image.network(
+                            university.imageUrl!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                print('✅ Image chargée avec succès: ${university.name}');
+                                return child;
+                              }
+                              print('⏳ Chargement ${university.name}: ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}');
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              print('❌ Erreur Image.network ${university.name}: $error');
+                              print('🔗 URL: ${university.imageUrl}');
+                              print('📱 Type d\'erreur: ${error.runtimeType}');
+                              
+                              return Container(
+                                color: Colors.grey[300],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.broken_image,
+                                      size: 30,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Image indisponible',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
                       )
                     : const Icon(
                         Icons.school,

@@ -29,7 +29,7 @@ class AppProvider with ChangeNotifier {
   String? _selectedType;
   String? _selectedDomain;
   double? _maxBudget;
-  double _maxDistance = 50.0; // km
+  // double _maxDistance = 50.0; // Supprimé - plus de filtre par distance
 
   // Services
   final AuthService _authService = AuthService();
@@ -183,6 +183,7 @@ class AppProvider with ChangeNotifier {
       debugPrint('   • ${firebaseUniversities.length} Firebase');
       debugPrint('   • ${customUniversities.length} personnalisées');
       debugPrint('   • ${standardUniversities.length} standards');
+      debugPrint('✅ Toutes les universités sont affichées (pas de filtre par distance)');
     } catch (e) {
       debugPrint('Erreur chargement universités: $e');
       // Fallback vers les universités standards uniquement
@@ -233,13 +234,13 @@ class AppProvider with ChangeNotifier {
     String? type,
     String? domain,
     double? maxBudget,
-    double? maxDistance,
+    double? maxDistance, // Gardé pour compatibilité mais plus utilisé
   }) {
     _selectedCity = city;
     _selectedType = type;
     _selectedDomain = domain;
     _maxBudget = maxBudget;
-    _maxDistance = maxDistance ?? _maxDistance;
+    // _maxDistance = maxDistance ?? _maxDistance; // Commenté - plus de filtre par distance
     _applyFilters();
     notifyListeners();
   }
@@ -250,7 +251,7 @@ class AppProvider with ChangeNotifier {
     _selectedType = null;
     _selectedDomain = null;
     _maxBudget = null;
-    _maxDistance = 50.0;
+    // _maxDistance = 50.0; // Supprimé - plus de filtre par distance
     _applyFilters();
     notifyListeners();
   }
@@ -296,11 +297,12 @@ class AppProvider with ChangeNotifier {
         return false;
       }
 
-      // Filtre par distance
-      if (_userLatitude != null && _userLongitude != null) {
-        final distance = university.distanceFrom(_userLatitude!, _userLongitude!);
-        if (distance > _maxDistance) return false;
-      }
+      // ✅ PLUS DE FILTRE PAR DISTANCE - Afficher toutes les universités
+      // Commenté pour afficher toutes les universités par défaut
+      // if (_userLatitude != null && _userLongitude != null) {
+      //   final distance = university.distanceFrom(_userLatitude!, _userLongitude!);
+      //   if (distance > _maxDistance) return false;
+      // }
 
       return true;
     }).toList();

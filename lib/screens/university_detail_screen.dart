@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,36 @@ class UniversityDetailScreen extends StatelessWidget {
     required this.university,
   });
 
+  /// Corrige l'URL de l'image pour la plateforme actuelle
+  String? _getCorrectImageUrl(String? imageUrl) {
+    if (imageUrl == null) return null;
+    
+    // Debug: toujours afficher la plateforme
+    print('🔧 Detail Correction URL - Platform: ${kIsWeb ? "Web" : "Mobile"}');
+    print('   URL entrée: $imageUrl');
+    
+    // Sur mobile (émulateur Android), remplacer localhost par 10.0.2.2
+    if (!kIsWeb) {
+      String correctedUrl = imageUrl;
+      
+      if (correctedUrl.contains('127.0.0.1')) {
+        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '10.0.2.2');
+        print('   ✅ Remplacement 127.0.0.1 → 10.0.2.2');
+      }
+      
+      if (correctedUrl.contains('localhost')) {
+        correctedUrl = correctedUrl.replaceAll('localhost', '10.0.2.2');
+        print('   ✅ Remplacement localhost → 10.0.2.2');
+      }
+      
+      print('   URL corrigée: $correctedUrl');
+      return correctedUrl;
+    }
+    
+    print('   ℹ️ Web - pas de correction nécessaire');
+    return imageUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,23 +58,49 @@ class UniversityDetailScreen extends StatelessWidget {
             foregroundColor: Colors.black,
             flexibleSpace: FlexibleSpaceBar(
               background: university.imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: university.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.school,
-                          size: 60,
-                          color: Colors.grey,
-                        ),
-                      ),
+                  ? Builder(
+                      builder: (context) {
+                        // Corriger l'URL pour la plateforme actuelle
+                        final correctedUrl = _getCorrectImageUrl(university.imageUrl);
+                        
+                        print('🖼️ Detail Image URL pour ${university.name}:');
+                        print('   Original: ${university.imageUrl}');
+                        print('   Corrigée: $correctedUrl');
+                        
+                        return CachedNetworkImage(
+                          imageUrl: correctedUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) {
+                            print('❌ Erreur chargement image detail ${university.name}: $error');
+                            return Container(
+                              color: Colors.grey[300],
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.broken_image,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Image indisponible',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
                     )
                   : Container(
                       color: Colors.grey[300],

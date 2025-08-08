@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../services/image_api_service.dart';
+import '../services/test_connection_service.dart';
 import '../models/image_model.dart';
 
 class TestApiScreen extends StatefulWidget {
@@ -77,6 +78,14 @@ class _TestApiScreenState extends State<TestApiScreen> {
                                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Text('Test Toutes URLs'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _testServerDiagnostic,
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                            child: const Text('Diagnostic Serveur'),
                           ),
                         ),
                       ],
@@ -459,6 +468,27 @@ class _TestApiScreenState extends State<TestApiScreen> {
       setState(() {
         _isUploading = false;
       });
+    }
+  }
+
+  Future<void> _testServerDiagnostic() async {
+    print('\n' + '=' * 50);
+    print('🧪 DIAGNOSTIC COMPLET DU SERVEUR');
+    print('=' * 50);
+    
+    await TestConnectionService.testServerConnection();
+    
+    print('=' * 50);
+    print('🧪 FIN DU DIAGNOSTIC');
+    print('=' * 50 + '\n');
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('📋 Diagnostic terminé - Vérifiez la console'),
+          backgroundColor: Colors.blue,
+        ),
+      );
     }
   }
 }
