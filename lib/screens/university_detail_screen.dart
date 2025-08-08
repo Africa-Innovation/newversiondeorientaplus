@@ -23,18 +23,18 @@ class UniversityDetailScreen extends StatelessWidget {
     print('🔧 Detail Correction URL - Platform: ${kIsWeb ? "Web" : "Mobile"}');
     print('   URL entrée: $imageUrl');
     
-    // Sur mobile (émulateur Android), remplacer localhost par 10.0.2.2
+    // Sur mobile physique, remplacer localhost par l'IP réelle
     if (!kIsWeb) {
       String correctedUrl = imageUrl;
       
       if (correctedUrl.contains('127.0.0.1')) {
-        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '10.0.2.2');
-        print('   ✅ Remplacement 127.0.0.1 → 10.0.2.2');
+        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.121');
+        print('   ✅ Remplacement 127.0.0.1 → 192.168.11.121');
       }
       
       if (correctedUrl.contains('localhost')) {
-        correctedUrl = correctedUrl.replaceAll('localhost', '10.0.2.2');
-        print('   ✅ Remplacement localhost → 10.0.2.2');
+        correctedUrl = correctedUrl.replaceAll('localhost', '192.168.11.121');
+        print('   ✅ Remplacement localhost → 192.168.11.121');
       }
       
       print('   URL corrigée: $correctedUrl');

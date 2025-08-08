@@ -51,7 +51,7 @@ class University {
               ?.map((s) => Program.fromJson(s))
               .toList() ??
           [],
-      tuitionFee: json['tuition_fee']?.toDouble(),
+      tuitionFee: json['tuition_fee'] != null ? _parseDouble(json['tuition_fee']) : null,
       website: json['website'],
       contact: json['contact'],
       email: json['email'],
@@ -64,8 +64,8 @@ class University {
           : null,
       hasScholarships: json['has_scholarships'] ?? false,
       hasAccommodation: json['has_accommodation'] ?? false,
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
+      latitude: _parseDouble(json['latitude']),
+      longitude: _parseDouble(json['longitude']),
     );
   }
 
@@ -195,5 +195,14 @@ class University {
 
   double _toRadians(double degree) {
     return degree * (math.pi / 180);
+  }
+
+  /// Helper pour convertir int ou double en double de manière sécurisée
+  static double _parseDouble(dynamic value) {
+    if (value == null) throw ArgumentError('La valeur ne peut pas être null');
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.parse(value);
+    throw ArgumentError('Impossible de convertir $value (${value.runtimeType}) en double');
   }
 }

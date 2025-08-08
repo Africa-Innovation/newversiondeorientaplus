@@ -49,8 +49,15 @@ class UniversityCard extends StatelessWidget {
                           print('🖼️ Test CORS - Image pour ${university.name}:');
                           print('   URL: ${university.imageUrl}');
                           
+                          // Corriger l'URL pour mobile physique
+                          String correctedUrl = university.imageUrl!;
+                          if (correctedUrl.contains('127.0.0.1')) {
+                            correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.121');
+                            print('📱 Mobile - URL corrigée: $correctedUrl');
+                          }
+                          
                           return Image.network(
-                            university.imageUrl!,
+                            correctedUrl,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) {

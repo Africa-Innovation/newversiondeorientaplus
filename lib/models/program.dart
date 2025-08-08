@@ -19,6 +19,22 @@ class Program {
     this.career,
   });
 
+  /// Helper method to parse priceByLevel from Firebase data
+  /// Handles both int and double values from Firebase
+  static Map<String, double> parsePriceByLevel(dynamic priceData) {
+    if (priceData == null) return {};
+    
+    final Map<String, double> result = {};
+    if (priceData is Map) {
+      priceData.forEach((key, value) {
+        if (value is num) {
+          result[key.toString()] = value.toDouble();
+        }
+      });
+    }
+    return result;
+  }
+
   factory Program.fromJson(Map<String, dynamic> json) {
     return Program(
       id: json['id'],
@@ -27,7 +43,7 @@ class Program {
       specialties: (json['specialties'] as List?)
           ?.map((s) => Specialty.fromJson(s))
           .toList() ?? [],
-      priceByLevel: Map<String, double>.from(json['priceByLevel'] ?? {}),
+      priceByLevel: Program.parsePriceByLevel(json['priceByLevel']),
       durationYears: json['durationYears'] ?? 3,
       admissionRequirements: List<String>.from(json['admissionRequirements'] ?? []),
       career: json['career'],
@@ -128,7 +144,7 @@ class Specialty {
           ? List<String>.from(json['specificRequirements'])
           : null,
       priceByLevel: json['priceByLevel'] != null 
-          ? Map<String, double>.from(json['priceByLevel'])
+          ? Program.parsePriceByLevel(json['priceByLevel'])
           : null,
     );
   }

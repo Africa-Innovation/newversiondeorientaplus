@@ -33,8 +33,8 @@ class RobustImageWidget extends StatelessWidget {
     // Si c'est une URL localhost et qu'on est sur mobile
     if (!kIsWeb && (originalUrl.contains('127.0.0.1') || originalUrl.contains('localhost'))) {
       String correctedUrl = originalUrl
-          .replaceAll('127.0.0.1', '10.0.2.2')
-          .replaceAll('localhost', '10.0.2.2');
+          .replaceAll('127.0.0.1', '192.168.11.121')
+          .replaceAll('localhost', '192.168.11.121');
       print('   📱 Mobile - correction: $correctedUrl');
       return correctedUrl;
     }

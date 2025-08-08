@@ -45,7 +45,11 @@ class FirebaseUniversityService {
           final university = University.fromJson(data);
           universities.add(university);
         } catch (e) {
+          final data = doc.data() as Map<String, dynamic>;
           print('⚠️ Erreur lors du parsing de l\'université ${doc.id}: $e');
+          print('🔍 Data problématique: $data');
+          print('🔍 Latitude type: ${data['latitude']?.runtimeType}, value: ${data['latitude']}');
+          print('🔍 Longitude type: ${data['longitude']?.runtimeType}, value: ${data['longitude']}');
           // Continue avec les autres universités
         }
       }
