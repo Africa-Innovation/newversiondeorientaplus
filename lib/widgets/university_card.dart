@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/university.dart';
+import '../providers/app_provider.dart';
 
 class UniversityCard extends StatelessWidget {
   final University university;
-  final double? userLatitude;
-  final double? userLongitude;
   final VoidCallback onTap;
   final VoidCallback onFavoriteToggle;
   final bool isFavorite;
@@ -15,19 +15,17 @@ class UniversityCard extends StatelessWidget {
     required this.onTap,
     required this.onFavoriteToggle,
     required this.isFavorite,
-    this.userLatitude,
-    this.userLongitude,
   });
 
   @override
   Widget build(BuildContext context) {
-    final distance = (userLatitude != null && userLongitude != null)
-        ? university.distanceFrom(userLatitude!, userLongitude!)
-        : null;
+    return Consumer<AppProvider>(
+      builder: (context, appProvider, child) {
+        final distanceText = appProvider.getDistanceToUniversity(university);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
@@ -159,10 +157,10 @@ class UniversityCard extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
-                      if (distance != null) ...[
+                      if (distanceText != null) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '• ${distance.toStringAsFixed(1)} km',
+                          '• $distanceText',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -288,6 +286,8 @@ class UniversityCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

@@ -54,8 +54,6 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                   child: UniversityCard(
                     university: university,
-                    userLatitude: provider.userLatitude,
-                    userLongitude: provider.userLongitude,
                     onTap: () {
                       Navigator.push(
                         context,

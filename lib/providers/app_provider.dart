@@ -5,6 +5,8 @@ import '../services/auth_service.dart';
 import '../services/university_service.dart';
 import '../services/firebase_university_service.dart';
 import '../services/admin_university_service.dart';
+import '../services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class AppProvider with ChangeNotifier {
   // User State
@@ -59,6 +61,11 @@ class AppProvider with ChangeNotifier {
       if (_isAuthenticated) {
         await _loadFavorites();
       }
+      
+      // Demander la localisation automatiquement
+      print('🚀 Initialisation: Demande de localisation...');
+      await requestUserLocation();
+      
     } catch (e) {
       debugPrint('Erreur lors de l\'initialisation: $e');
     } finally {
@@ -106,28 +113,6 @@ class AppProvider with ChangeNotifier {
     _isAuthenticated = false;
     _favoriteUniversities.clear();
     notifyListeners();
-  }
-
-  // Location Methods
-  Future<void> requestLocation() async {
-    try {
-      final position = await _universityService.getCurrentLocation();
-      if (position != null) {
-        _userLatitude = position.latitude;
-        _userLongitude = position.longitude;
-        _locationPermissionGranted = true;
-        
-        // Obtenir la ville basée sur les coordonnées
-        _userCity = await _universityService.getCityFromCoordinates();
-        
-        // Trier les universités par distance
-        _sortUniversitiesByDistance();
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Erreur géolocalisation: $e');
-      _locationPermissionGranted = false;
-    }
   }
 
   // University Methods
@@ -317,12 +302,6 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  void _sortUniversitiesByDistance() {
-    if (_userLatitude != null && _userLongitude != null) {
-      _applyFilters(); // Réapplique les filtres avec le nouveau tri
-    }
-  }
-
   // Favorites Methods
   Future<void> toggleFavorite(String universityId) async {
     if (_currentUser == null) return;
@@ -385,4 +364,58 @@ class AppProvider with ChangeNotifier {
       debugPrint('Erreur mise à jour profil: $e');
     }
   }
+
+  // ==================== GÉOLOCALISATION ====================
+
+  /// Demander la permission de localisation et obtenir la position
+  Future<bool> requestUserLocation() async {
+    print('📍 AppProvider: Demande de localisation utilisateur...');
+    
+    try {
+      Position? position = await LocationService.getCurrentPosition();
+      
+      if (position != null) {
+        _userLatitude = position.latitude;
+        _userLongitude = position.longitude;
+        _locationPermissionGranted = true;
+        
+        print('✅ Position utilisateur sauvegardée: $_userLatitude, $_userLongitude');
+        notifyListeners();
+        return true;
+      } else {
+        _locationPermissionGranted = false;
+        print('❌ Impossible d\'obtenir la position');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      print('❌ Erreur géolocalisation: $e');
+      _locationPermissionGranted = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Calculer la distance entre l'utilisateur et une université
+  String? getDistanceToUniversity(University university) {
+    if (!_locationPermissionGranted || _userLatitude == null || _userLongitude == null) {
+      return null;
+    }
+    
+    if (university.latitude == 0 || university.longitude == 0) {
+      return null;
+    }
+    
+    double distance = LocationService.calculateDistance(
+      _userLatitude!,
+      _userLongitude!,
+      university.latitude,
+      university.longitude,
+    );
+    
+    return LocationService.formatDistance(distance);
+  }
+
+  // Getters pour la localisation
+  bool get hasUserLocation => _locationPermissionGranted && _userLatitude != null && _userLongitude != null;
 }

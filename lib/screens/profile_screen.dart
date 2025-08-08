@@ -289,7 +289,7 @@ class ProfileScreen extends StatelessWidget {
           'Paramètres de localisation',
           'Gérer vos préférences de localisation',
           Icons.location_on,
-          () => provider.requestLocation(),
+          () => provider.requestUserLocation(),
         ),
         _buildOptionTile(
           context,

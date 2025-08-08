@@ -40,7 +40,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _requestLocationPermission() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    await provider.requestLocation();
+    bool locationObtained = await provider.requestUserLocation();
+    
+    if (locationObtained) {
+      print('✅ Localisation obtenue avec succès');
+    } else {
+      print('❌ Impossible d\'obtenir la localisation');
+      // Optionnel: Afficher un message à l'utilisateur
+    }
   }
 
   @override
@@ -60,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             Consumer<AppProvider>(
               builder: (context, provider, child) {
+                // Afficher la ville si disponible
                 if (provider.userCity != null) {
                   return Text(
                     '📍 ${provider.userCity}',
@@ -69,6 +77,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                   );
                 }
+                
+                // Sinon afficher les coordonnées si disponibles
+                if (provider.hasUserLocation) {
+                  return Text(
+                    '📍 ${provider.userLatitude!.toStringAsFixed(3)}, ${provider.userLongitude!.toStringAsFixed(3)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                }
+                
                 return const Text(
                   '📍 Localisation non disponible',
                   style: TextStyle(
@@ -84,6 +104,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         elevation: 0,
         foregroundColor: Colors.black,
         actions: [
+          // Bouton de localisation
+          Consumer<AppProvider>(
+            builder: (context, provider, child) {
+              return IconButton(
+                icon: Icon(
+                  provider.hasUserLocation ? Icons.location_on : Icons.location_off,
+                  color: provider.hasUserLocation ? Colors.green : Colors.grey,
+                ),
+                onPressed: () async {
+                  await _requestLocationPermission();
+                },
+                tooltip: provider.hasUserLocation 
+                    ? 'Localisation activée' 
+                    : 'Activer la localisation',
+              );
+            },
+          ),
           Consumer<AppProvider>(
             builder: (context, provider, child) {
               if (provider.isAuthenticated) {
@@ -229,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         const SizedBox(width: 8),
                         Text(
                           provider.locationPermissionGranted 
-                              ? 'Universités près de chez vous'
+                              ? 'Universités disponibles'
                               : 'Universités disponibles',
                           style: const TextStyle(
                             fontSize: 18,
@@ -292,8 +329,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               ),
                               child: UniversityCard(
                                 university: university,
-                                userLatitude: provider.userLatitude,
-                                userLongitude: provider.userLongitude,
                                 onTap: () {
                                   Navigator.push(
                                     context,
