@@ -319,7 +319,9 @@ class AppProvider with ChangeNotifier {
       }
 
       _currentUser = _currentUser!.copyWith(favoriteUniversities: favorites);
-      await _authService.updateUserProfile(_currentUser!);
+      
+      // 🔥 NOUVEAU: Utiliser la nouvelle méthode Firebase spécifique
+      await _authService.updateUserFavorites(_currentUser!.id, favorites);
       notifyListeners();
     } catch (e) {
       debugPrint('Erreur toggle favori: $e');

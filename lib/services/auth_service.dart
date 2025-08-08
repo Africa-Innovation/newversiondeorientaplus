@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
 import '../models/user_profile.dart';
+import 'firebase_user_service.dart';
 
 class AuthService {
   static const String _userKey = 'current_user';
@@ -176,7 +177,21 @@ class AuthService {
       final userData = prefs.getString(_userKey);
       
       if (userData != null) {
-        return UserProfile.fromJson(jsonDecode(userData));
+        final localUser = UserProfile.fromJson(jsonDecode(userData));
+        
+        // 🔥 NOUVEAU: Essayer de récupérer depuis Firebase pour synchroniser
+        try {
+          final firebaseUser = await FirebaseUserService.getUserProfile(localUser.id);
+          if (firebaseUser != null) {
+            // Utiliser les données Firebase si disponibles
+            await prefs.setString(_userKey, jsonEncode(firebaseUser.toJson()));
+            return firebaseUser;
+          }
+        } catch (e) {
+          print('⚠️ Impossible de synchroniser depuis Firebase: $e');
+        }
+        
+        return localUser;
       }
       return null;
     } catch (e) {
@@ -190,6 +205,37 @@ class AuthService {
     await _saveUser(user);
   }
 
+  // 🔥 NOUVEAU: Mettre à jour uniquement les favoris
+  Future<void> updateUserFavorites(String userId, List<String> favoriteIds) async {
+    try {
+      // Mettre à jour Firebase directement
+      await FirebaseUserService.updateUserFavorites(userId, favoriteIds);
+      
+      // Mettre à jour aussi localement
+      final currentUser = await getCurrentUser();
+      if (currentUser != null && currentUser.id == userId) {
+        final updatedUser = UserProfile(
+          id: currentUser.id,
+          name: currentUser.name,
+          phoneNumber: currentUser.phoneNumber,
+          series: currentUser.series,
+          city: currentUser.city,
+          favoriteUniversities: favoriteIds,
+          interests: currentUser.interests,
+          lastLoginDate: DateTime.now(),
+        );
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userKey, jsonEncode(updatedUser.toJson()));
+      }
+      
+      print('✅ Favoris mis à jour avec succès');
+    } catch (e) {
+      print('❌ Erreur mise à jour favoris: $e');
+      throw e;
+    }
+  }
+
   // Déconnexion
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -201,6 +247,15 @@ class AuthService {
   Future<void> _saveUser(UserProfile user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
+    
+    // 🔥 NOUVEAU: Sauvegarder aussi dans Firebase
+    try {
+      await FirebaseUserService.saveUserProfile(user);
+      print('✅ Profil utilisateur synchronisé avec Firebase');
+    } catch (e) {
+      print('⚠️ Impossible de synchroniser avec Firebase: $e');
+      // Continue avec SharedPreferences seulement en cas d'erreur Firebase
+    }
   }
 
   Future<UserProfile?> _getUserByPhone(String phoneNumber) async {
