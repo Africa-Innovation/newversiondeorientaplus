@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _hasLocation = false;
   bool _isLoading = true;
   bool _isInitialized = false;
+  Set<String> _favoriteIds = {}; // État local des favoris
 
   @override
   void initState() {
@@ -53,6 +54,9 @@ class _HomeScreenState extends State<HomeScreen>
       _userCity = provider.userCity;
       _hasLocation = provider.hasUserLocation;
       _isLoading = provider.isLoading;
+      
+      // Mettre à jour les favoris localement
+      _favoriteIds = provider.favoriteUniversities.map((u) => u.id).toSet();
     });
     
     // Mettre à jour le cache
@@ -80,6 +84,36 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _refreshData() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     await provider.refreshUniversities();
+    if (mounted) {
+      _updateLocalState(provider);
+    }
+  }
+
+  void _toggleFavorite(String universityId) async {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    
+    if (!provider.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connectez-vous pour ajouter aux favoris'),
+        ),
+      );
+      return;
+    }
+
+    // Optimistic update - mettre à jour l'UI immédiatement
+    setState(() {
+      if (_favoriteIds.contains(universityId)) {
+        _favoriteIds.remove(universityId);
+      } else {
+        _favoriteIds.add(universityId);
+      }
+    });
+
+    // Ensuite faire l'appel API
+    await provider.toggleFavorite(universityId);
+    
+    // Synchroniser avec l'état du provider au cas où il y aurait une erreur
     if (mounted) {
       _updateLocalState(provider);
     }
@@ -283,18 +317,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     );
                                   },
                                   onFavoriteToggle: () {
-                                    final provider = Provider.of<AppProvider>(context, listen: false);
-                                    if (provider.isAuthenticated) {
-                                      provider.toggleFavorite(university.id);
-                                    } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Connectez-vous pour ajouter aux favoris'),
-                                        ),
-                                      );
-                                    }
+                                    _toggleFavorite(university.id);
                                   },
-                                  isFavorite: Provider.of<AppProvider>(context, listen: false).isFavorite(university.id),
+                                  isFavorite: _favoriteIds.contains(university.id),
                                 ),
                               );
                             },
