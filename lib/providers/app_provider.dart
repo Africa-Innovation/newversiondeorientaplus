@@ -62,14 +62,25 @@ class AppProvider with ChangeNotifier {
         await _loadFavorites();
       }
       
-      // Demander la localisation automatiquement
-      print('🚀 Initialisation: Demande de localisation...');
-      await requestUserLocation();
+      // 🔄 MODIFIÉ: Demander la localisation de manière non-bloquante
+      print('🚀 Initialisation: Demande de localisation en arrière-plan...');
+      _requestLocationInBackground();
       
     } catch (e) {
       debugPrint('Erreur lors de l\'initialisation: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  // 🔥 NOUVEAU: Méthode pour demander la localisation sans bloquer l'initialisation
+  void _requestLocationInBackground() async {
+    try {
+      await requestUserLocation();
+      print('✅ Localisation obtenue en arrière-plan');
+    } catch (e) {
+      print('⚠️ Localisation refusée ou impossible: $e');
+      // L'app continue de fonctionner sans localisation
     }
   }
 

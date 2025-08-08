@@ -45,6 +45,13 @@ class _HomeScreenState extends State<HomeScreen>
       
       _updateLocalState(provider);
       _isInitialized = true;
+      
+      // 🔥 NOUVEAU: S'assurer que le loading s'arrête même sans localisation
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Forcer l'arrêt du loading après l'initialisation
+        });
+      }
     }
   }
 
@@ -53,7 +60,10 @@ class _HomeScreenState extends State<HomeScreen>
       _universities = provider.universities;
       _userCity = provider.userCity;
       _hasLocation = provider.hasUserLocation;
-      _isLoading = provider.isLoading;
+      
+      // 🔄 MODIFIÉ: Ne pas dépendre uniquement du provider.isLoading
+      // Si on a des universités, on peut arrêter le loading même sans localisation
+      _isLoading = provider.isLoading && _universities.isEmpty;
       
       // Mettre à jour les favoris localement
       _favoriteIds = provider.favoriteUniversities.map((u) => u.id).toSet();
@@ -217,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen>
                   
                   // Info localisation
                   if (_userCity != null)
+                  if (_hasLocation || _userCity != null)
                     SliverToBoxAdapter(
                       child: Container(
                         margin: const EdgeInsets.all(16),
@@ -239,6 +250,49 @@ class _HomeScreenState extends State<HomeScreen>
                               style: TextStyle(
                                 color: Colors.green.shade700,
                                 fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  
+                  // Affichage si pas de localisation
+                  if (!_hasLocation && _userCity == null)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_disabled,
+                              color: Colors.orange.shade700,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Localisation désactivée - Les distances ne seront pas affichées',
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _requestLocationPermission,
+                              child: Text(
+                                'Activer',
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
