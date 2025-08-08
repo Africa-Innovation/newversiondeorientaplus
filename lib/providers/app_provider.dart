@@ -4,6 +4,7 @@ import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/university_service.dart';
 import '../services/firebase_university_service.dart';
+import '../services/admin_university_service.dart';
 
 class AppProvider with ChangeNotifier {
   // User State
@@ -50,6 +51,9 @@ class AppProvider with ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     try {
+      // Charger les universités personnalisées depuis le stockage local
+      await AdminUniversityService.loadCustomUniversities();
+      
       await _checkAuthStatus();
       await _loadUniversities();
       if (_isAuthenticated) {
@@ -129,30 +133,56 @@ class AppProvider with ChangeNotifier {
   // University Methods
   Future<void> _loadUniversities() async {
     try {
-      // Charger les universités depuis le service principal (qui combine hardcoded + custom)
+      // 1. Charger les universités standard (hardcodées)
       List<University> standardUniversities = await _universityService.getAllUniversities();
       
-      // Essayer de charger depuis Firebase (avec fallback)
+      // 2. Charger les universités personnalisées créées par l'admin (local)
+      List<University> customUniversities = AdminUniversityService.getCustomUniversities();
+      
+      // 3. Charger depuis Firebase (priorité élevée car contient les universités créées)
       List<University> firebaseUniversities = [];
       try {
         firebaseUniversities = await FirebaseUniversityService.getAllUniversities();
+        debugPrint('🔥 Firebase: ${firebaseUniversities.length} universités chargées');
       } catch (e) {
         debugPrint('⚠️ Firebase indisponible, mode offline: $e');
       }
       
-      // Combiner les deux listes en évitant les doublons
-      Set<String> existingIds = standardUniversities.map((u) => u.id).toSet();
-      List<University> combinedUniversities = List.from(standardUniversities);
+      // 4. Combiner toutes les listes en évitant les doublons
+      // Firebase en premier car il contient les universités créées via l'admin
+      Set<String> existingIds = <String>{};
+      List<University> combinedUniversities = [];
       
+      // Ajouter d'abord Firebase (contient les universités créées)
       for (University university in firebaseUniversities) {
         if (!existingIds.contains(university.id)) {
           combinedUniversities.add(university);
+          existingIds.add(university.id);
+        }
+      }
+      
+      // Ajouter les universités personnalisées locales
+      for (University university in customUniversities) {
+        if (!existingIds.contains(university.id)) {
+          combinedUniversities.add(university);
+          existingIds.add(university.id);
+        }
+      }
+      
+      // Ajouter les universités standard en dernier
+      for (University university in standardUniversities) {
+        if (!existingIds.contains(university.id)) {
+          combinedUniversities.add(university);
+          existingIds.add(university.id);
         }
       }
       
       _allUniversities = combinedUniversities;
       _applyFilters();
-      debugPrint('🎯 AppProvider: ${_allUniversities.length} universités chargées (${standardUniversities.length} standards + ${firebaseUniversities.length} Firebase)');
+      debugPrint('🎯 AppProvider: ${_allUniversities.length} universités chargées');
+      debugPrint('   • ${firebaseUniversities.length} Firebase');
+      debugPrint('   • ${customUniversities.length} personnalisées');
+      debugPrint('   • ${standardUniversities.length} standards');
     } catch (e) {
       debugPrint('Erreur chargement universités: $e');
       // Fallback vers les universités standards uniquement
@@ -170,6 +200,9 @@ class AppProvider with ChangeNotifier {
   Future<void> refreshUniversities() async {
     _isLoading = true;
     notifyListeners();
+    
+    // Recharger les universités personnalisées depuis le stockage
+    await AdminUniversityService.loadCustomUniversities();
     
     await _loadUniversities();
     await _loadFavorites();

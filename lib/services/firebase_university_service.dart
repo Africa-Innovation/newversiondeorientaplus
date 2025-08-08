@@ -14,6 +14,10 @@ class FirebaseUniversityService {
       // Convertir en Map et s'assurer que tous les champs sont sérialisables
       final universityData = university.toJson();
       
+      // Ajouter les timestamps Firebase
+      universityData['createdAt'] = FieldValue.serverTimestamp();
+      universityData['updatedAt'] = FieldValue.serverTimestamp();
+      
       await _firestore
           .collection(_universitiesCollection)
           .doc(university.id)
@@ -31,7 +35,6 @@ class FirebaseUniversityService {
     try {
       final QuerySnapshot snapshot = await _firestore
           .collection(_universitiesCollection)
-          .orderBy('createdAt', descending: true)
           .get();
 
       final List<University> universities = [];
@@ -46,6 +49,12 @@ class FirebaseUniversityService {
           // Continue avec les autres universités
         }
       }
+
+      // Trier par date de création si disponible, sinon par nom
+      universities.sort((a, b) {
+        // Pour l'instant, trier par nom en attendant d'avoir les timestamps
+        return a.name.compareTo(b.name);
+      });
 
       print('✅ Chargé ${universities.length} universités depuis Firestore');
       return universities;
