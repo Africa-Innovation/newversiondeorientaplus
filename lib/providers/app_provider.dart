@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/university.dart';
 import '../models/user_profile.dart';
+import '../models/advertisement.dart';
 import '../services/auth_service.dart';
 import '../services/university_service.dart';
 import '../services/firebase_university_service.dart';
+import '../services/firebase_advertisement_service.dart';
 import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -17,6 +19,9 @@ class AppProvider with ChangeNotifier {
   List<University> _allUniversities = [];
   List<University> _filteredUniversities = [];
   List<University> _favoriteUniversities = [];
+  
+  // Advertisements State
+  List<Advertisement> _advertisements = [];
   
   // Location State
   double? _userLatitude;
@@ -37,6 +42,7 @@ class AppProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   List<University> get universities => _filteredUniversities;
   List<University> get favoriteUniversities => _favoriteUniversities;
+  List<Advertisement> get advertisements => _advertisements.where((ad) => ad.isValid).toList()..sort((a, b) => b.priority.compareTo(a.priority));
   double? get userLatitude => _userLatitude;
   double? get userLongitude => _userLongitude;
   String? get userCity => _userCity;
@@ -55,8 +61,12 @@ class AppProvider with ChangeNotifier {
         await _loadFavorites();
       }
       
+      // Charger les publicités
+      await loadAdvertisements();
+      
       // 🔄 MODIFIÉ: Demander la localisation de manière non-bloquante
-      print('🚀 Initialisation: Demande de localisation en arrière-plan...');
+      debugPrint('🚀 Initialisation: Demande de localisation en arrière-plan...');
+      // Utiliser unawaited pour éviter les conflits
       _requestLocationInBackground();
       
     } catch (e) {
@@ -382,6 +392,53 @@ class AppProvider with ChangeNotifier {
     );
     
     return LocationService.formatDistance(distance);
+  }
+
+  /// Charger les publicités depuis Firebase
+  Future<void> loadAdvertisements() async {
+    try {
+      _advertisements = await FirebaseAdvertisementService.getAllAdvertisements();
+      debugPrint('🎯 AppProvider: ${_advertisements.length} publicités chargées depuis Firebase');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Erreur chargement publicités: $e');
+      // En cas d'erreur, charger des publicités par défaut
+      _loadDefaultAdvertisements();
+    }
+  }
+
+  /// Charger les publicités par défaut (fallback)
+  void _loadDefaultAdvertisements() {
+    _advertisements = [
+      Advertisement(
+        id: 'default_ad_001',
+        imageUrl: 'https://via.placeholder.com/400x200/4CAF50/FFFFFF?text=Inscription+Ouverte+2024',
+        title: 'Inscriptions Ouvertes 2024',
+        description: 'Inscrivez-vous maintenant dans les meilleures universités',
+        startDate: DateTime.now().subtract(const Duration(days: 1)),
+        endDate: DateTime.now().add(const Duration(days: 30)),
+        priority: 10,
+      ),
+      Advertisement(
+        id: 'default_ad_002',
+        imageUrl: 'https://via.placeholder.com/400x200/2196F3/FFFFFF?text=Bourses+Disponibles',
+        title: 'Bourses Disponibles',
+        description: 'Découvrez les bourses d\'études disponibles',
+        startDate: DateTime.now().subtract(const Duration(days: 2)),
+        endDate: DateTime.now().add(const Duration(days: 45)),
+        priority: 8,
+      ),
+      Advertisement(
+        id: 'default_ad_003',
+        imageUrl: 'https://via.placeholder.com/400x200/FF9800/FFFFFF?text=Orientation+Gratuite',
+        title: 'Orientation Gratuite',
+        description: 'Bénéficiez d\'une orientation gratuite',
+        startDate: DateTime.now().subtract(const Duration(days: 3)),
+        endDate: DateTime.now().add(const Duration(days: 60)),
+        priority: 6,
+      ),
+    ];
+    notifyListeners();
   }
 
   // Getters pour la localisation

@@ -5,6 +5,7 @@ import '../services/home_cache.dart';
 import '../models/university.dart';
 import '../widgets/university_card.dart';
 import '../widgets/search_bar.dart';
+import '../widgets/welcome_banner_with_ads.dart';
 import 'university_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -135,11 +136,14 @@ class _HomeScreenState extends State<HomeScreen>
     
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
-        // Mettre à jour l'état local à chaque changement du provider
-        if (_isInitialized) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _updateLocalState(provider);
-          });
+        // Synchroniser uniquement si nécessaire et éviter les boucles
+        if (_isInitialized && mounted) {
+          // Synchronisation simple sans setState pour éviter les boucles
+          _universities = provider.universities;
+          _userCity = provider.userCity;
+          _hasLocation = provider.hasUserLocation;
+          _isLoading = provider.isLoading && _universities.isEmpty;
+          _favoriteIds = provider.favoriteUniversities.map((u) => u.id).toSet();
         }
         
         return Scaffold(
@@ -183,40 +187,17 @@ class _HomeScreenState extends State<HomeScreen>
               onRefresh: _refreshData,
               child: CustomScrollView(
                 slivers: [
-                  // En-tête de bienvenue
+                  // En-tête de bienvenue avec carrousel publicitaire
                   SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.blue.shade600, Colors.blue.shade800],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bienvenue sur OrientaPlus!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    child: WelcomeBannerWithAds(
+                      onAdTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Publicité cliquée !'),
+                            duration: Duration(seconds: 2),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Découvrez les meilleures universités et centres de formation',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                   

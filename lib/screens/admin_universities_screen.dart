@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/university.dart';
 import '../providers/admin_provider.dart';
 import 'admin_university_form_screen.dart';
+import 'admin_advertisement_list_screen.dart';
 import 'university_detail_screen.dart';
 import 'test_api_screen.dart';
 
@@ -115,6 +116,17 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign),
+            tooltip: 'Gérer les publicités',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AdminAdvertisementListScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -286,6 +298,69 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
                   ],
                 ),
               ),
+              
+              // Section d'accès rapide
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.dashboard_outlined,
+                              color: Colors.green[700],
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Accès rapide',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildQuickAccessCard(
+                                'Publicités',
+                                'Gérer les annonces publicitaires',
+                                Icons.campaign,
+                                Colors.purple,
+                                () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const AdminAdvertisementListScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildQuickAccessCard(
+                                'Universités',
+                                'Ajouter une nouvelle université',
+                                Icons.add_business,
+                                Colors.green,
+                                _addUniversity,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Liste des universités
               Expanded(
@@ -424,6 +499,68 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
