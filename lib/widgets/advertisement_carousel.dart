@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import '../utils/image_url_helper.dart';
 
 class AdvertisementCarousel extends StatefulWidget {
   final List<String> imageUrls;
@@ -123,43 +124,59 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                     ),
-                    child: Image.network(
-                      widget.imageUrls[index],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image,
-                                size: 50,
-                                color: Colors.grey[600],
+                    child: Builder(
+                      builder: (context) {
+                        // Corriger l'URL pour la plateforme actuelle
+                        final correctedUrl = ImageUrlHelper.getCorrectImageUrl(widget.imageUrls[index]);
+                        
+                        print('🖼️ Advertisement Image:');
+                        print('   Original: ${widget.imageUrls[index]}');
+                        print('   Corrigée: $correctedUrl');
+                        
+                        return Image.network(
+                          correctedUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ Erreur chargement publicité: $error');
+                            print('   URL: $correctedUrl');
+                            return Container(
+                              color: Colors.grey[300],
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image,
+                                    size: 50,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Image non disponible',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Image non disponible',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              print('✅ Publicité chargée avec succès');
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                strokeWidth: 2,
+                                color: Colors.blue[600],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            strokeWidth: 2,
-                            color: Colors.blue[600],
-                          ),
+                            );
+                          },
                         );
                       },
                     ),

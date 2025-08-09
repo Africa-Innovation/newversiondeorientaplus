@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/advertisement.dart';
 import '../providers/admin_advertisement_provider.dart';
 import '../providers/app_provider.dart';
+import '../utils/image_url_helper.dart';
 import 'admin_advertisement_form_screen.dart';
 
 class AdminAdvertisementListScreen extends StatefulWidget {
@@ -165,19 +166,31 @@ class _AdminAdvertisementListScreenState extends State<AdminAdvertisementListScr
               child: Container(
                 height: 150,
                 width: double.infinity,
-                child: Image.network(
-                  advertisement.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
+                child: Builder(
+                  builder: (context) {
+                    // Corriger l'URL pour la plateforme actuelle
+                    final correctedUrl = ImageUrlHelper.getCorrectImageUrl(advertisement.imageUrl);
+                    
+                    print('🖼️ Admin List Advertisement Image:');
+                    print('   Original: ${advertisement.imageUrl}');
+                    print('   Corrigée: $correctedUrl');
+                    
+                    return Image.network(
+                      correctedUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        print('❌ Erreur chargement admin pub: $error');
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

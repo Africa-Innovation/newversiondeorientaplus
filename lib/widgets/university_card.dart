@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/university.dart';
 import '../providers/app_provider.dart';
+import '../utils/image_url_helper.dart';
 
 class UniversityCard extends StatelessWidget {
   final University university;
@@ -50,8 +51,12 @@ class UniversityCard extends StatelessWidget {
                           // Corriger l'URL pour mobile physique
                           String correctedUrl = university.imageUrl!;
                           if (correctedUrl.contains('127.0.0.1')) {
-                            correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.121');
-                            print('📱 Mobile - URL corrigée: $correctedUrl');
+                            correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.101');
+                            print('📱 Mobile - URL corrigée (127.0.0.1): $correctedUrl');
+                          }
+                          if (correctedUrl.contains('192.168.11.121')) {
+                            correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.101');
+                            print('📱 Mobile - URL corrigée (ancienne IP): $correctedUrl');
                           }
                           
                           return Image.network(

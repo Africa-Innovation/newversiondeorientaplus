@@ -5,7 +5,7 @@ class TestConnectionService {
     print('🧪 Test de connexion au serveur Laravel...');
     
     List<String> urlsToTest = [
-      'http://192.168.11.121:8000',  // IP réseau local (priorité)
+      'http://192.168.11.101:8000',  // IP réseau local (priorité)
       'http://127.0.0.1:8000',
       'http://10.0.2.2:8000',
       'http://localhost:8000',
@@ -32,9 +32,9 @@ class TestConnectionService {
     // Test spécifique pour les images
     print('\n🖼️ Test des images...');
     List<String> imageUrls = [
-      'http://192.168.11.121:8000/storage/images/582124d2-3f85-47f1-800f-12fc1e015ab9.png',
-      'http://192.168.11.121:8000/storage/images/fc582a90-48a6-40d9-8db5-41703729f85f.png',
-      'http://192.168.11.121:8000/storage/universities/1735222978_IMG_0096.JPG',
+      'http://192.168.11.101:8000/storage/images/582124d2-3f85-47f1-800f-12fc1e015ab9.png',
+      'http://192.168.11.101:8000/storage/images/fc582a90-48a6-40d9-8db5-41703729f85f.png',
+      'http://192.168.11.101:8000/storage/universities/1735222978_IMG_0096.JPG',
       'http://127.0.0.1:8000/storage/images/582124d2-3f85-47f1-800f-12fc1e015ab9.png',
       'http://10.0.2.2:8000/storage/images/582124d2-3f85-47f1-800f-12fc1e015ab9.png',
     ];

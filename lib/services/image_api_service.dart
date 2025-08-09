@@ -14,13 +14,13 @@ class ImageApiService {
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api/v1'; // Web - localhost direct
     } else {
-      return 'http://192.168.11.121:8000/api/v1'; // Mobile - IP réseau local
+      return 'http://192.168.11.101:8000/api/v1'; // Mobile - IP réseau local
     }
   }
   
   // URLs alternatives pour tests
   static const List<String> _alternativeUrls = [
-    'http://192.168.11.121:8000/api/v1', // IP réseau local (principal)
+    'http://192.168.11.101:8000/api/v1', // IP réseau local (principal)
     'http://10.0.2.2:8000/api/v1',       // Émulateur Android (fallback)
     'http://127.0.0.1:8000/api/v1',      // Localhost (pour test)
     'http://localhost:8000/api/v1',      // Localhost alternatif

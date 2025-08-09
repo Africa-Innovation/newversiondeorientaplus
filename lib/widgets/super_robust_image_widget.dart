@@ -31,10 +31,11 @@ class SuperRobustImageWidget extends StatelessWidget {
     }
 
     // Si c'est une URL localhost et qu'on est sur mobile
-    if (!kIsWeb && (originalUrl.contains('127.0.0.1') || originalUrl.contains('localhost'))) {
+    if (!kIsWeb && (originalUrl.contains('127.0.0.1') || originalUrl.contains('localhost') || originalUrl.contains('192.168.11.121'))) {
       String correctedUrl = originalUrl
-          .replaceAll('127.0.0.1', '192.168.11.121')
-          .replaceAll('localhost', '192.168.11.121');
+          .replaceAll('127.0.0.1', '192.168.11.101')
+          .replaceAll('localhost', '192.168.11.101')
+          .replaceAll('192.168.11.121', '192.168.11.101');
       print('   📱 Mobile - correction: $correctedUrl');
       return correctedUrl;
     }

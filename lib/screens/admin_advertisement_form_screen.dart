@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/advertisement.dart';
 import '../services/image_api_service.dart';
+import '../utils/image_url_helper.dart';
 import '../services/firebase_advertisement_service.dart';
 import '../providers/admin_advertisement_provider.dart';
 import '../providers/app_provider.dart';
@@ -557,17 +558,29 @@ class _AdminAdvertisementFormScreenState extends State<AdminAdvertisementFormScr
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    _uploadedImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey.shade200,
-                        child: const Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
+                  child: Builder(
+                    builder: (context) {
+                      // Corriger l'URL pour la plateforme actuelle
+                      final correctedUrl = ImageUrlHelper.getCorrectImageUrl(_uploadedImageUrl!);
+                      
+                      print('🖼️ Admin Form Advertisement Image:');
+                      print('   Original: $_uploadedImageUrl');
+                      print('   Corrigée: $correctedUrl');
+                      
+                      return Image.network(
+                        correctedUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('❌ Erreur chargement form pub: $error');
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
