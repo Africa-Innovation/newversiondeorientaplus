@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/university.dart';
 import '../models/program.dart';
+import 'firebase_university_service.dart';
 
 class AdminUniversityService {
   static const String _storageKey = 'admin_universities';
@@ -56,6 +57,16 @@ class AdminUniversityService {
 
     _customUniversities.add(university);
     await saveCustomUniversities();
+    
+    // 🔥 NOUVEAU: Sauvegarder aussi dans Firebase
+    try {
+      await FirebaseUniversityService.saveUniversity(university);
+      print('✅ Université sauvegardée dans Firebase');
+    } catch (e) {
+      print('⚠️ Impossible de sauvegarder dans Firebase: $e');
+      // Continue même si Firebase échoue
+    }
+    
     print('🎉 Université créée: ${university.name} (Total: ${_customUniversities.length})');
   }
 

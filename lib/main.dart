@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
+import 'providers/admin_provider.dart';
 import 'screens/main_screen.dart';
-import 'services/admin_university_service.dart';
 
 void main() async {
   // S'assurer que Flutter est initialisé
@@ -32,8 +32,7 @@ void main() async {
     print('⚠️ Erreur Firebase: $e - L\'app fonctionnera en mode offline');
   }
   
-  // Charger les universités personnalisées
-  await AdminUniversityService.loadCustomUniversities();
+  // Plus besoin de charger les universités locales - tout vient de Firebase maintenant
 
   runApp(const OrientaApp());
 }
@@ -43,8 +42,11 @@ class OrientaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AppProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AppProvider()),
+        ChangeNotifierProvider(create: (context) => AdminProvider()),
+      ],
       child: MaterialApp(
         title: 'Orienta',
         debugShowCheckedModeBanner: false,

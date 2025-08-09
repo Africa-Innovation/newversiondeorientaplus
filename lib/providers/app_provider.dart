@@ -4,7 +4,6 @@ import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/university_service.dart';
 import '../services/firebase_university_service.dart';
-import '../services/admin_university_service.dart';
 import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -53,8 +52,7 @@ class AppProvider with ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     try {
-      // Charger les universités personnalisées depuis le stockage local
-      await AdminUniversityService.loadCustomUniversities();
+      // Plus besoin de charger depuis le stockage local - tout vient de Firebase
       
       await _checkAuthStatus();
       await _loadUniversities();
@@ -132,10 +130,7 @@ class AppProvider with ChangeNotifier {
       // 1. Charger les universités standard (hardcodées)
       List<University> standardUniversities = await _universityService.getAllUniversities();
       
-      // 2. Charger les universités personnalisées créées par l'admin (local)
-      List<University> customUniversities = AdminUniversityService.getCustomUniversities();
-      
-      // 3. Charger depuis Firebase (priorité élevée car contient les universités créées)
+      // 2. Charger depuis Firebase (contient les universités créées par l'admin)
       List<University> firebaseUniversities = [];
       try {
         firebaseUniversities = await FirebaseUniversityService.getAllUniversities();
@@ -144,21 +139,13 @@ class AppProvider with ChangeNotifier {
         debugPrint('⚠️ Firebase indisponible, mode offline: $e');
       }
       
-      // 4. Combiner toutes les listes en évitant les doublons
+      // 3. Combiner Firebase + Standards en évitant les doublons
       // Firebase en premier car il contient les universités créées via l'admin
       Set<String> existingIds = <String>{};
       List<University> combinedUniversities = [];
       
       // Ajouter d'abord Firebase (contient les universités créées)
       for (University university in firebaseUniversities) {
-        if (!existingIds.contains(university.id)) {
-          combinedUniversities.add(university);
-          existingIds.add(university.id);
-        }
-      }
-      
-      // Ajouter les universités personnalisées locales
-      for (University university in customUniversities) {
         if (!existingIds.contains(university.id)) {
           combinedUniversities.add(university);
           existingIds.add(university.id);
@@ -177,7 +164,6 @@ class AppProvider with ChangeNotifier {
       _applyFilters();
       debugPrint('🎯 AppProvider: ${_allUniversities.length} universités chargées');
       debugPrint('   • ${firebaseUniversities.length} Firebase');
-      debugPrint('   • ${customUniversities.length} personnalisées');
       debugPrint('   • ${standardUniversities.length} standards');
       debugPrint('✅ Toutes les universités sont affichées (pas de filtre par distance)');
     } catch (e) {
@@ -198,8 +184,7 @@ class AppProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     
-    // Recharger les universités personnalisées depuis le stockage
-    await AdminUniversityService.loadCustomUniversities();
+    // Plus besoin de recharger depuis le stockage local - tout vient de Firebase
     
     await _loadUniversities();
     await _loadFavorites();
