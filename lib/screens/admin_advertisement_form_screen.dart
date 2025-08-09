@@ -10,6 +10,7 @@ import '../models/advertisement.dart';
 import '../services/image_api_service.dart';
 import '../services/firebase_advertisement_service.dart';
 import '../providers/admin_advertisement_provider.dart';
+import '../providers/app_provider.dart';
 
 class AdminAdvertisementFormScreen extends StatefulWidget {
   final Advertisement? advertisement; // null pour création, non-null pour édition
@@ -286,6 +287,11 @@ class _AdminAdvertisementFormScreenState extends State<AdminAdvertisementFormScr
             backgroundColor: Colors.green,
           ),
         );
+        
+        // 🔄 NOUVEAU: Rafraîchir les publicités dans l'AppProvider
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        await appProvider.refreshAdvertisements();
+        
         Navigator.of(context).pop(true);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

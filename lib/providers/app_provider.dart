@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import '../models/university.dart';
 import '../models/user_profile.dart';
 import '../models/advertisement.dart';
@@ -22,6 +23,7 @@ class AppProvider with ChangeNotifier {
   
   // Advertisements State
   List<Advertisement> _advertisements = [];
+  Timer? _advertisementExpirationTimer;
   
   // Location State
   double? _userLatitude;
@@ -64,7 +66,10 @@ class AppProvider with ChangeNotifier {
       // Charger les publicités
       await loadAdvertisements();
       
-      // 🔄 MODIFIÉ: Demander la localisation de manière non-bloquante
+      // � NOUVEAU: Démarrer la vérification périodique d'expiration des publicités
+      _startAdvertisementExpirationCheck();
+      
+      // �🔄 MODIFIÉ: Demander la localisation de manière non-bloquante
       debugPrint('🚀 Initialisation: Demande de localisation en arrière-plan...');
       // Utiliser unawaited pour éviter les conflits
       _requestLocationInBackground();
@@ -192,6 +197,9 @@ class AppProvider with ChangeNotifier {
     
     await _loadUniversities();
     await _loadFavorites();
+    
+    // 🔄 NOUVEAU: Recharger aussi les publicités
+    await loadAdvertisements();
     
     _isLoading = false;
     notifyListeners();
@@ -407,6 +415,12 @@ class AppProvider with ChangeNotifier {
     }
   }
 
+  /// Rafraîchir uniquement les publicités
+  Future<void> refreshAdvertisements() async {
+    debugPrint('🔄 Rafraîchissement des publicités...');
+    await loadAdvertisements();
+  }
+
   /// Charger les publicités par défaut (fallback)
   void _loadDefaultAdvertisements() {
     _advertisements = [
@@ -439,6 +453,50 @@ class AppProvider with ChangeNotifier {
       ),
     ];
     notifyListeners();
+  }
+
+  /// 🕐 Démarrer la vérification périodique d'expiration des publicités
+  void _startAdvertisementExpirationCheck() {
+    // Vérifier toutes les heures si des publicités ont expiré
+    _advertisementExpirationTimer = Timer.periodic(const Duration(hours: 1), (timer) {
+      _checkAndRemoveExpiredAdvertisements();
+    });
+    
+    // Aussi faire une vérification immédiate
+    _checkAndRemoveExpiredAdvertisements();
+  }
+
+  /// 🗑️ Vérifier et supprimer les publicités expirées
+  void _checkAndRemoveExpiredAdvertisements() {
+    final now = DateTime.now();
+    final initialCount = _advertisements.length;
+    
+    // Filtrer les publicités encore valides
+    final validAds = _advertisements.where((ad) {
+      final isStillValid = ad.isActive && 
+                          now.isAfter(ad.startDate) && 
+                          now.isBefore(ad.endDate);
+      
+      if (!isStillValid) {
+        debugPrint('🗑️ Publicité expirée supprimée: ${ad.title} (fin: ${ad.endDate})');
+      }
+      
+      return isStillValid;
+    }).toList();
+    
+    // Mettre à jour seulement si il y a des changements
+    if (validAds.length != initialCount) {
+      _advertisements = validAds;
+      debugPrint('📢 ${initialCount - validAds.length} publicité(s) expirée(s) supprimée(s)');
+      notifyListeners();
+    }
+  }
+
+  /// Nettoyer les ressources
+  @override
+  void dispose() {
+    _advertisementExpirationTimer?.cancel();
+    super.dispose();
   }
 
   // Getters pour la localisation

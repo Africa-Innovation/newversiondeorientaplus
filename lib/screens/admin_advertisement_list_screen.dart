@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/advertisement.dart';
 import '../providers/admin_advertisement_provider.dart';
+import '../providers/app_provider.dart';
 import 'admin_advertisement_form_screen.dart';
 
 class AdminAdvertisementListScreen extends StatefulWidget {
@@ -372,6 +373,10 @@ class _AdminAdvertisementListScreenState extends State<AdminAdvertisementListScr
             backgroundColor: Colors.orange,
           ),
         );
+        
+        // 🔄 NOUVEAU: Rafraîchir les publicités dans l'AppProvider
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        await appProvider.refreshAdvertisements();
       }
     }
   }
@@ -407,6 +412,10 @@ class _AdminAdvertisementListScreenState extends State<AdminAdvertisementListScr
             backgroundColor: Colors.green,
           ),
         );
+        
+        // 🔄 NOUVEAU: Rafraîchir les publicités dans l'AppProvider
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        await appProvider.refreshAdvertisements();
       }
     }
   }
