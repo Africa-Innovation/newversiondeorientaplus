@@ -512,58 +512,6 @@ class UniversityService {
     }).toList();
   }
 
-  // Filtrer les universités (codées en dur + personnalisées)
-  Future<List<University>> filterUniversities({
-    String? city,
-    String? type,
-    String? domain,
-    double? maxBudget,
-    double? maxDistance,
-    double? userLatitude,
-    double? userLongitude,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    List<University> filtered = await getAllUniversities();
-
-    if (city != null && city.isNotEmpty) {
-      filtered = filtered
-          .where((univ) => univ.city.toLowerCase() == city.toLowerCase())
-          .toList();
-    }
-
-    if (type != null && type.isNotEmpty) {
-      filtered = filtered.where((univ) => univ.type == type).toList();
-    }
-
-    if (domain != null && domain.isNotEmpty) {
-      filtered = filtered
-          .where(
-            (univ) => univ.programs.any(
-              (program) =>
-                  program.name.toLowerCase().contains(domain.toLowerCase()),
-            ),
-          )
-          .toList();
-    }
-
-    if (maxBudget != null) {
-      filtered = filtered.where((univ) {
-        final minPrice = univ.minPrice;
-        return minPrice == null || minPrice <= maxBudget;
-      }).toList();
-    }
-
-    if (maxDistance != null && userLatitude != null && userLongitude != null) {
-      filtered = filtered.where((univ) {
-        final distance = univ.distanceFrom(userLatitude, userLongitude);
-        return distance <= maxDistance;
-      }).toList();
-    }
-
-    return filtered;
-  }
-
   // Obtenir la position actuelle de l'utilisateur
   Future<Position?> getCurrentLocation() async {
     try {

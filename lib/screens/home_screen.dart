@@ -133,41 +133,50 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     super.build(context);
     
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'OrientaPlus',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+    return Consumer<AppProvider>(
+      builder: (context, provider, child) {
+        // Mettre à jour l'état local à chaque changement du provider
+        if (_isInitialized) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateLocalState(provider);
+          });
+        }
+        
+        return Scaffold(
+          backgroundColor: Colors.grey[50],
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'OrientaPlus',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  _userCity ?? 'Localisation non disponible',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _hasLocation ? Icons.location_on : Icons.location_off,
+                  color: _hasLocation ? Colors.green : Colors.grey,
+                ),
+                onPressed: _requestLocationPermission,
+                tooltip: _hasLocation ? 'Localisation activée' : 'Activer la localisation',
               ),
-            ),
-            Text(
-              _userCity ?? 'Localisation non disponible',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _hasLocation ? Icons.location_on : Icons.location_off,
-              color: _hasLocation ? Colors.green : Colors.grey,
-            ),
-            onPressed: _requestLocationPermission,
-            tooltip: _hasLocation ? 'Localisation activée' : 'Activer la localisation',
+            ],
           ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -221,6 +230,7 @@ class _HomeScreenState extends State<HomeScreen>
                           provider.searchUniversities(query);
                           _updateLocalState(provider);
                         },
+                        initialValue: Provider.of<AppProvider>(context, listen: false).searchQuery,
                       ),
                     ),
                   ),
@@ -383,6 +393,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
+        );
+      },
     );
   }
 }

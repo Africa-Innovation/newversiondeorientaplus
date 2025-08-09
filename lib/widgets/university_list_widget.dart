@@ -66,7 +66,7 @@ class UniversityListWidget extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Essayez de modifier vos filtres',
+                              'Vérifiez votre connexion internet',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[500],

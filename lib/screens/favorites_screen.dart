@@ -63,6 +63,14 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
   }
 
+  @override
+  void didUpdateWidget(FavoritesScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Mettre à jour les favoris quand le widget est mis à jour
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    _updateLocalState(provider);
+  }
+
   Future<void> _refreshFavorites() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
     await provider.initialize();
@@ -79,20 +87,31 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   Widget build(BuildContext context) {
     super.build(context); // Important pour AutomaticKeepAliveClientMixin
     
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'Mes Favoris',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+    return Consumer<AppProvider>(
+      builder: (context, provider, child) {
+        // Mettre à jour l'état local à chaque changement du provider
+        if (_isInitialized) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateLocalState(provider);
+          });
+        }
+        
+        return Scaffold(
+          backgroundColor: Colors.grey[50],
+          appBar: AppBar(
+            title: const Text(
+              'Mes Favoris',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            foregroundColor: Colors.black,
           ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
-      ),
-      body: _buildBody(),
+          body: _buildBody(),
+        );
+      },
     );
   }
 

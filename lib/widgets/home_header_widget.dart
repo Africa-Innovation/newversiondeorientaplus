@@ -56,6 +56,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 onSearch: (query) {
                   provider.searchUniversities(query);
                 },
+                initialValue: provider.searchQuery,
               ),
             ),
             

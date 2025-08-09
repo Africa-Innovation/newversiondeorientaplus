@@ -24,13 +24,8 @@ class AppProvider with ChangeNotifier {
   String? _userCity;
   bool _locationPermissionGranted = false;
 
-  // Search & Filter State
+  // Search State
   String _searchQuery = '';
-  String? _selectedCity;
-  String? _selectedType;
-  String? _selectedDomain;
-  double? _maxBudget;
-  // double _maxDistance = 50.0; // Supprimé - plus de filtre par distance
 
   // Services
   final AuthService _authService = AuthService();
@@ -161,17 +156,16 @@ class AppProvider with ChangeNotifier {
       }
       
       _allUniversities = combinedUniversities;
-      _applyFilters();
+      _applySearch();
       debugPrint('🎯 AppProvider: ${_allUniversities.length} universités chargées');
       debugPrint('   • ${firebaseUniversities.length} Firebase');
       debugPrint('   • ${standardUniversities.length} standards');
-      debugPrint('✅ Toutes les universités sont affichées (pas de filtre par distance)');
     } catch (e) {
       debugPrint('Erreur chargement universités: $e');
       // Fallback vers les universités standards uniquement
       try {
         _allUniversities = await _universityService.getAllUniversities();
-        _applyFilters();
+        _applySearch();
         debugPrint('🔄 Fallback: ${_allUniversities.length} universités standards chargées');
       } catch (fallbackError) {
         debugPrint('Erreur fallback: $fallbackError');
@@ -199,7 +193,7 @@ class AppProvider with ChangeNotifier {
       print('   User ID: ${_currentUser!.id}');
       print('   Favoris dans profil: ${_currentUser!.favoriteUniversities}');
       
-      // Filtrer les universités favorites à partir de toutes les universités
+      // Récupérer les universités favorites à partir de toutes les universités
       _favoriteUniversities = _allUniversities
           .where((univ) => _currentUser!.favoriteUniversities.contains(univ.id))
           .toList();
@@ -213,90 +207,44 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  // Search & Filter Methods
+  // Search Methods
   void searchUniversities(String query) {
     _searchQuery = query;
-    _applyFilters();
+    _applySearch();
     notifyListeners();
   }
 
-  void setFilters({
-    String? city,
-    String? type,
-    String? domain,
-    double? maxBudget,
-    double? maxDistance, // Gardé pour compatibilité mais plus utilisé
-  }) {
-    _selectedCity = city;
-    _selectedType = type;
-    _selectedDomain = domain;
-    _maxBudget = maxBudget;
-    // _maxDistance = maxDistance ?? _maxDistance; // Commenté - plus de filtre par distance
-    _applyFilters();
-    notifyListeners();
-  }
-
-  void clearFilters() {
+  void clearSearch() {
     _searchQuery = '';
-    _selectedCity = null;
-    _selectedType = null;
-    _selectedDomain = null;
-    _maxBudget = null;
-    // _maxDistance = 50.0; // Supprimé - plus de filtre par distance
-    _applyFilters();
+    _applySearch();
     notifyListeners();
   }
 
-  void _applyFilters() {
-    _filteredUniversities = _allUniversities.where((university) {
-      // Filtre par recherche (nom, programmes ou filières)
-      if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
+  void _applySearch() {
+    if (_searchQuery.isEmpty) {
+      // Si pas de recherche, afficher toutes les universités
+      _filteredUniversities = List.from(_allUniversities);
+    } else {
+      // Appliquer la recherche
+      final query = _searchQuery.toLowerCase();
+      _filteredUniversities = _allUniversities.where((university) {
+        // Recherche dans le nom
         final matchesName = university.name.toLowerCase().contains(query);
+        
+        // Recherche dans les programmes
         final matchesProgram = university.programs
             .any((program) => program.name.toLowerCase().contains(query));
+        
+        // Recherche dans les spécialités
         final matchesSpecialty = university.specialtyNames
             .any((specialty) => specialty.toLowerCase().contains(query));
-        if (!matchesName && !matchesProgram && !matchesSpecialty) return false;
-      }
-
-      // Filtre par ville
-      if (_selectedCity != null && 
-          university.city.toLowerCase() != _selectedCity!.toLowerCase()) {
-        return false;
-      }
-
-      // Filtre par type
-      if (_selectedType != null && university.type != _selectedType) {
-        return false;
-      }
-
-      // Filtre par domaine (recherche dans les programmes et filières)
-      if (_selectedDomain != null) {
-        final hasProgram = university.programs
-            .any((program) => program.name.toLowerCase()
-                .contains(_selectedDomain!.toLowerCase()));
-        final hasSpecialty = university.specialtyNames
-            .any((specialty) => specialty.toLowerCase()
-                .contains(_selectedDomain!.toLowerCase()));
-        if (!hasProgram && !hasSpecialty) return false;
-      }
-
-      // Filtre par budget
-      if (_maxBudget != null && university.minPrice != null &&
-          university.minPrice! > _maxBudget!) {
-        return false;
-      }
-
-      // ✅ PLUS DE FILTRE PAR DISTANCE - Afficher toutes les universités
-      // Commenté pour afficher toutes les universités par défaut
-      // if (_userLatitude != null && _userLongitude != null) {
-      //   final distance = university.distanceFrom(_userLatitude!, _userLongitude!);
-      //   if (distance > _maxDistance) return false;
-      // }
-
-      return true;
-    }).toList();
+        
+        // Recherche dans la ville
+        final matchesCity = university.city.toLowerCase().contains(query);
+        
+        return matchesName || matchesProgram || matchesSpecialty || matchesCity;
+      }).toList();
+    }
 
     // Trier par distance si la localisation est disponible
     if (_userLatitude != null && _userLongitude != null) {
