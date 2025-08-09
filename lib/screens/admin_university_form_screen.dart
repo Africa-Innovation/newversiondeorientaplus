@@ -9,9 +9,9 @@ import 'package:file_picker/file_picker.dart';
 import '../models/university.dart';
 import '../models/program.dart';
 import '../services/admin_university_service.dart';
-import '../services/firebase_university_service.dart';
 import '../services/image_api_service.dart';
 import '../providers/app_provider.dart';
+import '../providers/admin_provider.dart';
 
 class AdminUniversityFormScreen extends StatefulWidget {
   final University? university; // null pour création, non-null pour édition
@@ -340,36 +340,46 @@ class _AdminUniversityFormScreenState extends State<AdminUniversityFormScreen> {
       }
 
       if (_isEditing) {
-        await AdminUniversityService.updateUniversity(university);
-        // Essayer de sauvegarder dans Firebase (avec fallback)
-        try {
-          await FirebaseUniversityService.updateUniversity(university);
-        } catch (e) {
-          debugPrint('⚠️ Firebase indisponible pour la mise à jour: $e');
-        }
-        if (mounted) {
+        // Utiliser AdminProvider pour la modification
+        final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+        final success = await adminProvider.updateUniversity(university);
+        
+        if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Université modifiée avec succès'),
               backgroundColor: Colors.green,
             ),
           );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(adminProvider.error ?? 'Erreur lors de la modification'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
         }
       } else {
-        await AdminUniversityService.createUniversity(university);
-        // Essayer de sauvegarder dans Firebase (avec fallback)
-        try {
-          await FirebaseUniversityService.saveUniversity(university);
-        } catch (e) {
-          debugPrint('⚠️ Firebase indisponible pour la sauvegarde: $e');
-        }
-        if (mounted) {
+        // Utiliser AdminProvider pour la création
+        final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+        final success = await adminProvider.addUniversity(university);
+        
+        if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Université créée avec succès'),
               backgroundColor: Colors.green,
             ),
           );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(adminProvider.error ?? 'Erreur lors de la création'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
         }
       }
 

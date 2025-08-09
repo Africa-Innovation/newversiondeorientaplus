@@ -2,14 +2,83 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../widgets/university_card.dart';
+import '../models/university.dart';
 import 'university_detail_screen.dart';
 import 'auth_screen.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> 
+    with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
+
+  // Variables locales pour éviter les Consumer
+  List<University> _favoriteUniversities = [];
+  bool _isAuthenticated = false;
+  bool _isLoading = true;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    if (!_isInitialized) {
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      
+      // Charger les données une seule fois
+      await provider.initialize();
+      
+      _updateLocalState(provider);
+      _isInitialized = true;
+    }
+  }
+
+  void _updateLocalState(AppProvider provider) {
+    if (mounted) {
+      setState(() {
+        _favoriteUniversities = provider.favoriteUniversities;
+        _isAuthenticated = provider.isAuthenticated;
+        _isLoading = provider.isLoading;
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Mettre à jour l'état local quand on revient sur cette page
+    if (_isInitialized) {
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      _updateLocalState(provider);
+    }
+  }
+
+  Future<void> _refreshFavorites() async {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    await provider.initialize();
+    _updateLocalState(provider);
+  }
+
+  void _toggleFavorite(String universityId) {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    provider.toggleFavorite(universityId);
+    _updateLocalState(provider);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Important pour AutomaticKeepAliveClientMixin
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -23,54 +92,52 @@ class FavoritesScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: Consumer<AppProvider>(
-        builder: (context, provider, child) {
-          if (!provider.isAuthenticated) {
-            return _buildLoginPrompt(context);
-          }
+      body: _buildBody(),
+    );
+  }
 
-          if (provider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+  Widget _buildBody() {
+    if (!_isAuthenticated) {
+      return _buildLoginPrompt(context);
+    }
 
-          if (provider.favoriteUniversities.isEmpty) {
-            return _buildEmptyState();
-          }
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await provider.initialize();
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.favoriteUniversities.length,
-              itemBuilder: (context, index) {
-                final university = provider.favoriteUniversities[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == provider.favoriteUniversities.length - 1 ? 100 : 12,
-                  ),
-                  child: UniversityCard(
-                    university: university,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UniversityDetailScreen(
-                            university: university,
-                          ),
-                        ),
-                      );
-                    },
-                    onFavoriteToggle: () {
-                      provider.toggleFavorite(university.id);
-                    },
-                    isFavorite: true, // Toujours vrai dans cette liste
+    if (_favoriteUniversities.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshFavorites,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _favoriteUniversities.length,
+        itemBuilder: (context, index) {
+          final university = _favoriteUniversities[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == _favoriteUniversities.length - 1 ? 100 : 12,
+            ),
+            child: UniversityCard(
+              university: university,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UniversityDetailScreen(
+                      university: university,
+                    ),
                   ),
                 );
               },
+              onFavoriteToggle: () {
+                _toggleFavorite(university.id);
+              },
+              isFavorite: true, // Toujours vrai dans cette liste
             ),
           );
         },
