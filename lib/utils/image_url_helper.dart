@@ -20,22 +20,28 @@ class ImageUrlHelper {
     if (!kIsWeb) {
       String correctedUrl = imageUrl;
       
-      // Remplacer l'ancienne IP 192.168.11.121 par la nouvelle 192.168.11.101
+      // Remplacer l'ancienne IP 192.168.11.121 par la nouvelle 192.168.11.102
       if (correctedUrl.contains('192.168.11.121')) {
-        correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.101');
-        print('   ✅ Remplacement 192.168.11.121 → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.102');
+        print('   ✅ Remplacement 192.168.11.121 → 192.168.11.102');
+      }
+      
+      // Remplacer l'ancienne IP 192.168.11.101 par la nouvelle 192.168.11.102
+      if (correctedUrl.contains('192.168.11.101')) {
+        correctedUrl = correctedUrl.replaceAll('192.168.11.101', '192.168.11.102');
+        print('   ✅ Remplacement 192.168.11.101 → 192.168.11.102');
       }
       
       // Remplacer 127.0.0.1 par l'IP réelle
       if (correctedUrl.contains('127.0.0.1')) {
-        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.101');
-        print('   ✅ Remplacement 127.0.0.1 → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.102');
+        print('   ✅ Remplacement 127.0.0.1 → 192.168.11.102');
       }
       
       // Remplacer localhost par l'IP réelle
       if (correctedUrl.contains('localhost')) {
-        correctedUrl = correctedUrl.replaceAll('localhost', '192.168.11.101');
-        print('   ✅ Remplacement localhost → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('localhost', '192.168.11.102');
+        print('   ✅ Remplacement localhost → 192.168.11.102');
       }
       
       print('   URL corrigée: $correctedUrl');

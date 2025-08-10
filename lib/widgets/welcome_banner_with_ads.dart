@@ -20,16 +20,10 @@ class WelcomeBannerWithAds extends StatelessWidget {
         // Obtenir les publicités du provider
         final advertisements = provider.advertisements;
         
-        // Extraire les URLs des images des publicités
+        // Extraire les URLs des images des publicités FIREBASE uniquement
         final List<String> adImageUrls = advertisements.isNotEmpty 
             ? advertisements.map((ad) => ad.imageUrl).toList()
-            : advertisementImages.isNotEmpty 
-                ? advertisementImages 
-                : [
-                    'https://via.placeholder.com/400x200/4CAF50/FFFFFF?text=OrientaPlus+Publicité+1',
-                    'https://via.placeholder.com/400x200/2196F3/FFFFFF?text=OrientaPlus+Publicité+2',
-                    'https://via.placeholder.com/400x200/FF9800/FFFFFF?text=OrientaPlus+Publicité+3',
-                  ];
+            : []; // Pas de fallback assets - utiliser uniquement Firebase
 
         return Container(
           margin: const EdgeInsets.all(16),

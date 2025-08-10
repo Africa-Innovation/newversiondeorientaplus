@@ -51,12 +51,16 @@ class UniversityCard extends StatelessWidget {
                           // Corriger l'URL pour mobile physique
                           String correctedUrl = university.imageUrl!;
                           if (correctedUrl.contains('127.0.0.1')) {
-                            correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.101');
+                            correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.102');
                             print('📱 Mobile - URL corrigée (127.0.0.1): $correctedUrl');
                           }
                           if (correctedUrl.contains('192.168.11.121')) {
-                            correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.101');
-                            print('📱 Mobile - URL corrigée (ancienne IP): $correctedUrl');
+                            correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.102');
+                            print('📱 Mobile - URL corrigée (ancienne IP 121): $correctedUrl');
+                          }
+                          if (correctedUrl.contains('192.168.11.101')) {
+                            correctedUrl = correctedUrl.replaceAll('192.168.11.101', '192.168.11.102');
+                            print('📱 Mobile - URL corrigée (ancienne IP 101): $correctedUrl');
                           }
                           
                           return Image.network(

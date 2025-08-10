@@ -1,7 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import '../models/university.dart';
 import '../models/program.dart';
-import 'admin_university_service.dart';
 
 class UniversityService {
   // Données simulées des universités burkinabè avec la nouvelle structure Programme → Filières
@@ -456,41 +455,34 @@ class UniversityService {
     ),
   ];
 
-  // Obtenir toutes les universités (codées en dur + personnalisées)
+  // Obtenir toutes les universités (données statiques uniquement)
   Future<List<University>> getAllUniversities() async {
-    // Charger les universités personnalisées
-    await AdminUniversityService.loadCustomUniversities();
-    
     // Simulation d'un délai réseau
     await Future.delayed(const Duration(milliseconds: 500));
     
-    // Combiner les universités codées en dur avec les personnalisées
-    final customUniversities = AdminUniversityService.getCustomUniversities();
-    final allUniversities = [..._universitiesData, ...customUniversities];
+    // Retourner seulement les universités codées en dur
+    final allUniversities = [..._universitiesData];
     
     // Debug
     print('📚 Universités codées en dur: ${_universitiesData.length}');
-    print('🎯 Universités personnalisées: ${customUniversities.length}');
     print('📋 Total universités: ${allUniversities.length}');
     
     return allUniversities;
   }
 
-  // Obtenir une université par ID (codées en dur + personnalisées)
+  // Obtenir une université par ID (données statiques uniquement)
   Future<University?> getUniversityById(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     
-    // Chercher d'abord dans les universités codées en dur
+    // Chercher dans les universités codées en dur
     try {
       return _universitiesData.firstWhere((univ) => univ.id == id);
     } catch (e) {
-      // Si pas trouvé, chercher dans les universités personnalisées
-      await AdminUniversityService.loadCustomUniversities();
-      return AdminUniversityService.getUniversityById(id);
+      return null; // Pas trouvé
     }
   }
 
-  // Rechercher des universités par nom, ville ou domaine (codées en dur + personnalisées)
+  // Rechercher des universités par nom, ville ou domaine (données statiques uniquement)
   Future<List<University>> searchUniversities(String query) async {
     await Future.delayed(const Duration(milliseconds: 300));
 

@@ -405,12 +405,25 @@ class AppProvider with ChangeNotifier {
   /// Charger les publicités depuis Firebase
   Future<void> loadAdvertisements() async {
     try {
-      _advertisements = await FirebaseAdvertisementService.getAllAdvertisements();
-      debugPrint('🎯 AppProvider: ${_advertisements.length} publicités chargées depuis Firebase');
-      notifyListeners();
+      debugPrint('🔄 AppProvider: Début du chargement des publicités depuis Firebase...');
+      
+      // Utiliser la méthode statique directement
+      _advertisements = await FirebaseAdvertisementService.getActiveAdvertisements();
+
+      if (_advertisements.isEmpty) {
+        debugPrint('⚠️ AppProvider: Aucune publicité trouvée dans Firebase');
+        _loadDefaultAdvertisements();
+      } else {
+        debugPrint('🎯 AppProvider: ${_advertisements.length} publicités chargées depuis Firebase');
+        for (var ad in _advertisements) {
+          debugPrint('   - ${ad.title}: ${ad.imageUrl}');
+        }
+        notifyListeners();
+      }
     } catch (e) {
-      debugPrint('❌ Erreur chargement publicités: $e');
-      // En cas d'erreur, charger des publicités par défaut
+      debugPrint('❌ AppProvider: Erreur chargement publicités Firebase: $e');
+      debugPrint('   Stack trace: ${e.toString()}');
+      debugPrint('🔄 AppProvider: Utilisation du fallback...');
       _loadDefaultAdvertisements();
     }
   }
@@ -423,35 +436,9 @@ class AppProvider with ChangeNotifier {
 
   /// Charger les publicités par défaut (fallback)
   void _loadDefaultAdvertisements() {
-    _advertisements = [
-      Advertisement(
-        id: 'default_ad_001',
-        imageUrl: 'https://via.placeholder.com/400x200/4CAF50/FFFFFF?text=Inscription+Ouverte+2024',
-        title: 'Inscriptions Ouvertes 2024',
-        description: 'Inscrivez-vous maintenant dans les meilleures universités',
-        startDate: DateTime.now().subtract(const Duration(days: 1)),
-        endDate: DateTime.now().add(const Duration(days: 30)),
-        priority: 10,
-      ),
-      Advertisement(
-        id: 'default_ad_002',
-        imageUrl: 'https://via.placeholder.com/400x200/2196F3/FFFFFF?text=Bourses+Disponibles',
-        title: 'Bourses Disponibles',
-        description: 'Découvrez les bourses d\'études disponibles',
-        startDate: DateTime.now().subtract(const Duration(days: 2)),
-        endDate: DateTime.now().add(const Duration(days: 45)),
-        priority: 8,
-      ),
-      Advertisement(
-        id: 'default_ad_003',
-        imageUrl: 'https://via.placeholder.com/400x200/FF9800/FFFFFF?text=Orientation+Gratuite',
-        title: 'Orientation Gratuite',
-        description: 'Bénéficiez d\'une orientation gratuite',
-        startDate: DateTime.now().subtract(const Duration(days: 3)),
-        endDate: DateTime.now().add(const Duration(days: 60)),
-        priority: 6,
-      ),
-    ];
+    // NE PLUS utiliser d'assets - uniquement en cas d'urgence
+    debugPrint('⚠️ Aucune publicité Firebase disponible');
+    _advertisements = [];
     notifyListeners();
   }
 

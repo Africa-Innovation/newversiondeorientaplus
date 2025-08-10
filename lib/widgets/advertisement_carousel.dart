@@ -126,11 +126,14 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
                     ),
                     child: Builder(
                       builder: (context) {
-                        // Corriger l'URL pour la plateforme actuelle
-                        final correctedUrl = ImageUrlHelper.getCorrectImageUrl(widget.imageUrls[index]);
+                        final imageUrl = widget.imageUrls[index];
                         
-                        print('🖼️ Advertisement Image:');
-                        print('   Original: ${widget.imageUrls[index]}');
+                        print('🖼️ Advertisement Image (Firebase):');
+                        print('   Original: $imageUrl');
+                        
+                        // Toutes les images de publicité viennent de Firebase/Laravel
+                        // Utiliser ImageUrlHelper pour corriger l'URL
+                        final correctedUrl = ImageUrlHelper.getCorrectImageUrl(imageUrl);
                         print('   Corrigée: $correctedUrl');
                         
                         return Image.network(
@@ -151,7 +154,7 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Image non disponible',
+                                    'Publicité non disponible',
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 14,
@@ -185,7 +188,7 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
               },
             ),
           ),
-          
+
           // Indicateurs de points (si plus d'une image)
           if (widget.imageUrls.length > 1)
             Positioned(
@@ -217,7 +220,7 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
                 ),
               ),
             ),
-            
+
           // Badge "Publicité" en haut à droite
           Positioned(
             top: 8,

@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
-import 'providers/admin_provider.dart';
-import 'providers/admin_advertisement_provider.dart';
 import 'screens/main_screen.dart';
 
 void main() async {
@@ -46,8 +44,6 @@ class OrientaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AppProvider()),
-        ChangeNotifierProvider(create: (context) => AdminProvider()),
-        ChangeNotifierProvider(create: (context) => AdminAdvertisementProvider()),
       ],
       child: MaterialApp(
         title: 'Orienta',

@@ -28,18 +28,23 @@ class UniversityDetailScreen extends StatelessWidget {
       String correctedUrl = imageUrl;
       
       if (correctedUrl.contains('127.0.0.1')) {
-        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.101');
-        print('   ✅ Remplacement 127.0.0.1 → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('127.0.0.1', '192.168.11.102');
+        print('   ✅ Remplacement 127.0.0.1 → 192.168.11.102');
       }
       
       if (correctedUrl.contains('192.168.11.121')) {
-        correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.101');
-        print('   ✅ Remplacement 192.168.11.121 → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('192.168.11.121', '192.168.11.102');
+        print('   ✅ Remplacement 192.168.11.121 → 192.168.11.102');
+      }
+      
+      if (correctedUrl.contains('192.168.11.101')) {
+        correctedUrl = correctedUrl.replaceAll('192.168.11.101', '192.168.11.102');
+        print('   ✅ Remplacement 192.168.11.101 → 192.168.11.102');
       }
       
       if (correctedUrl.contains('localhost')) {
-        correctedUrl = correctedUrl.replaceAll('localhost', '192.168.11.101');
-        print('   ✅ Remplacement localhost → 192.168.11.101');
+        correctedUrl = correctedUrl.replaceAll('localhost', '192.168.11.102');
+        print('   ✅ Remplacement localhost → 192.168.11.102');
       }
       
       print('   URL corrigée: $correctedUrl');

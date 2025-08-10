@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:io';
 import '../models/university.dart';
-import '../models/program.dart';
-import 'image_api_service.dart';
 
 class FirebaseUniversityService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -108,12 +105,6 @@ class FirebaseUniversityService {
   /// 🗑️ Supprime une université
   static Future<void> deleteUniversity(String universityId) async {
     try {
-      // Supprimer d'abord l'image associée si elle existe
-      final university = await getUniversityById(universityId);
-      if (university?.imageUrl != null) {
-        await _deleteUniversityImageFromApi(university!.imageUrl!);
-      }
-
       await _firestore
           .collection(_universitiesCollection)
           .doc(universityId)
@@ -126,54 +117,7 @@ class FirebaseUniversityService {
     }
   }
 
-  /// 📤 Upload une image et sauvegarde l'université avec l'URL de l'image
-  static Future<String?> uploadUniversityImage(
-    File imageFile,
-    String universityId,
-    String universityName,
-  ) async {
-    try {
-      // Upload de l'image via l'API Laravel
-      final response = await ImageApiService.uploadUniversityImage(
-        imageFile,
-        altText: 'Image de $universityName',
-        universityId: universityId,
-      );
-
-      if (response.success && response.data != null) {
-        final imageUrl = response.data!.url;
-        print('✅ Image uploadée avec succès: $imageUrl');
-        return imageUrl;
-      } else {
-        throw Exception('Échec de l\'upload de l\'image: ${response.message}');
-      }
-    } catch (e) {
-      print('❌ Erreur lors de l\'upload d\'image: $e');
-      throw Exception('Impossible d\'uploader l\'image: $e');
-    }
-  }
-
-  /// 🗑️ Supprime l'image d'une université depuis l'API
-  static Future<void> _deleteUniversityImageFromApi(String imageUrl) async {
-    try {
-      // Extraire l'ID de l'image depuis l'URL si possible
-      // Cette logique dépend de la structure de votre API
-      final uri = Uri.parse(imageUrl);
-      final filename = uri.pathSegments.last;
-      
-      // Vous pourriez avoir besoin d'adapter cette logique
-      // selon la façon dont votre API structure les URLs
-      print('🗑️ Tentative de suppression de l\'image: $filename');
-      
-      // Note: Vous pourriez avoir besoin d'ajouter une méthode dans votre API
-      // pour supprimer une image par URL ou filename
-    } catch (e) {
-      print('⚠️ Impossible de supprimer l\'image: $e');
-      // Ne pas faire échouer la suppression de l\'université pour autant
-    }
-  }
-
-  /// 🔍 Recherche d'universités par ville
+  ///  Recherche d'universités par ville
   static Future<List<University>> getUniversitiesByCity(String city) async {
     try {
       final QuerySnapshot snapshot = await _firestore
