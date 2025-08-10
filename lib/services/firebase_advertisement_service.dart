@@ -196,20 +196,28 @@ class FirebaseAdvertisementService {
 
   /// Écouter les changements de publicités actives en temps réel pour l'app
   static Stream<List<Advertisement>> watchActiveAdvertisements() {
+    debugPrint('👁️ FirebaseAdvertisementService: Démarrage du watchActiveAdvertisements...');
     return _firestore
         .collection(_collection)
         .where('is_active', isEqualTo: true)
-        .orderBy('priority', descending: true)
         .snapshots()
         .map((snapshot) {
+      debugPrint('📊 Firebase Snapshot reçu: ${snapshot.docs.length} documents');
       final advertisements = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
+        debugPrint('  📄 Document trouvé: ${doc.id} - ${data['title']} (actif: ${data['is_active']})');
         return Advertisement.fromJson(data);
       }).toList();
 
-      // Filtrer uniquement les publicités valides
-      return advertisements.where((ad) => ad.isValid).toList();
+      // Filtrer les publicités valides et trier en mémoire par priorité
+      final validAds = advertisements
+          .where((ad) => ad.isValid)
+          .toList()
+        ..sort((a, b) => b.priority.compareTo(a.priority));
+      
+      debugPrint('✅ Service: ${advertisements.length} total, ${validAds.length} valides après filtrage');
+      return validAds;
     });
   }
 

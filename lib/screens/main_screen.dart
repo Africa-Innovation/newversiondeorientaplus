@@ -24,10 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialiser l'application
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AppProvider>(context, listen: false).initialize();
-    });
+    // L'initialisation est maintenant automatique dans le constructeur AppProvider
   }
 
   @override

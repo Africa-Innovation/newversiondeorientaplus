@@ -39,10 +39,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (!_isInitialized) {
       final provider = Provider.of<AppProvider>(context, listen: false);
       
-      // Charger les données une seule fois
-      if (!HomeCache.isInitialized) {
-        await provider.initialize();
-      }
+      // Les données se chargent automatiquement via le constructeur AppProvider
+      // Plus besoin d'appeler provider.initialize()
       
       _updateLocalState(provider);
       _isInitialized = true;

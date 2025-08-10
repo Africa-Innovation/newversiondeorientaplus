@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:async';
 import '../models/university.dart';
 import '../models/user_profile.dart';
@@ -11,6 +12,19 @@ import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 class AppProvider with ChangeNotifier {
+  // Constructor avec auto-initialisation
+  AppProvider() {
+    debugPrint('🎯🎯🎯 AppProvider CONSTRUCTEUR appelé !!! 🎯🎯🎯');
+    // Auto-initialiser après la création
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('🔥🔥🔥 Auto-initialisation du AppProvider... 🔥🔥🔥');
+      initialize();
+      
+      // Démarrer le rafraîchissement automatique des publicités toutes les 30 secondes
+      _startAdvertisementAutoRefresh();
+    });
+  }
+
   // User State
   UserProfile? _currentUser;
   bool _isAuthenticated = false;
@@ -24,6 +38,7 @@ class AppProvider with ChangeNotifier {
   // Advertisements State
   List<Advertisement> _advertisements = [];
   Timer? _advertisementExpirationTimer;
+  StreamSubscription<List<Advertisement>>? _advertisementStreamSubscription;
   
   // Location State
   double? _userLatitude;
@@ -53,6 +68,7 @@ class AppProvider with ChangeNotifier {
 
   // Initialization
   Future<void> initialize() async {
+    debugPrint('🚀🚀🚀 AppProvider.initialize() APPELÉE !!! 🚀🚀🚀');
     _setLoading(true);
     try {
       // Plus besoin de charger depuis le stockage local - tout vient de Firebase
@@ -64,6 +80,7 @@ class AppProvider with ChangeNotifier {
       }
       
       // Charger les publicités
+      debugPrint('📢📢📢 Appel de loadAdvertisements() depuis initialize() 📢📢📢');
       await loadAdvertisements();
       
       // � NOUVEAU: Démarrer la vérification périodique d'expiration des publicités
@@ -402,28 +419,31 @@ class AppProvider with ChangeNotifier {
     return LocationService.formatDistance(distance);
   }
 
-  /// Charger les publicités depuis Firebase
+  /// Charger les publicités depuis Firebase (méthode directe comme pour les universités)
   Future<void> loadAdvertisements() async {
     try {
       debugPrint('🔄 AppProvider: Début du chargement des publicités depuis Firebase...');
       
-      // Utiliser la méthode statique directement
-      _advertisements = await FirebaseAdvertisementService.getActiveAdvertisements();
-
+      // Récupérer directement les publicités actives (comme pour les universités)
+      List<Advertisement> advertisements = await FirebaseAdvertisementService.getActiveAdvertisements();
+      
+      _advertisements = advertisements;
+      
       if (_advertisements.isEmpty) {
-        debugPrint('⚠️ AppProvider: Aucune publicité trouvée dans Firebase');
+        debugPrint('⚠️ AppProvider: Aucune publicité active trouvée');
         _loadDefaultAdvertisements();
       } else {
-        debugPrint('🎯 AppProvider: ${_advertisements.length} publicités chargées depuis Firebase');
+        debugPrint('🎯 AppProvider: ${_advertisements.length} publicités actives chargées');
         for (var ad in _advertisements) {
           debugPrint('   - ${ad.title}: ${ad.imageUrl}');
         }
-        notifyListeners();
       }
+      
+      notifyListeners();
+      debugPrint('✅ Publicités chargées avec succès');
+      
     } catch (e) {
-      debugPrint('❌ AppProvider: Erreur chargement publicités Firebase: $e');
-      debugPrint('   Stack trace: ${e.toString()}');
-      debugPrint('🔄 AppProvider: Utilisation du fallback...');
+      debugPrint('❌ AppProvider: Erreur lors du chargement des publicités: $e');
       _loadDefaultAdvertisements();
     }
   }
@@ -434,12 +454,42 @@ class AppProvider with ChangeNotifier {
     await loadAdvertisements();
   }
 
+  /// Force le rechargement complet des publicités avec notification
+  Future<void> forceRefreshAdvertisements() async {
+    debugPrint('🔄 Force refresh des publicités...');
+    _setLoading(true);
+    try {
+      // Vider le cache actuel
+      _advertisements.clear();
+      notifyListeners();
+      
+      // Recharger depuis Firebase
+      await loadAdvertisements();
+      debugPrint('✅ Publicités rechargées avec succès');
+    } catch (e) {
+      debugPrint('❌ Erreur lors du rechargement forcé: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Charger les publicités par défaut (fallback)
   void _loadDefaultAdvertisements() {
     // NE PLUS utiliser d'assets - uniquement en cas d'urgence
     debugPrint('⚠️ Aucune publicité Firebase disponible');
     _advertisements = [];
     notifyListeners();
+  }
+
+  /// 🔄 Démarrer le rafraîchissement automatique des publicités
+  void _startAdvertisementAutoRefresh() {
+    debugPrint('🔄 Démarrage du rafraîchissement automatique des publicités...');
+    
+    // Rafraîchir toutes les 30 secondes pour capturer les nouvelles publicités
+    Timer.periodic(const Duration(seconds: 30), (timer) async {
+      debugPrint('🔄 Rafraîchissement automatique des publicités...');
+      await refreshAdvertisements();
+    });
   }
 
   /// 🕐 Démarrer la vérification périodique d'expiration des publicités
@@ -483,6 +533,7 @@ class AppProvider with ChangeNotifier {
   @override
   void dispose() {
     _advertisementExpirationTimer?.cancel();
+    _advertisementStreamSubscription?.cancel();
     super.dispose();
   }
 

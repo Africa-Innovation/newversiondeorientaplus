@@ -35,8 +35,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     if (!_isInitialized) {
       final provider = Provider.of<AppProvider>(context, listen: false);
       
-      // Charger les données une seule fois
-      await provider.initialize();
+      // Les données se chargent automatiquement via le constructeur AppProvider
+      // Plus besoin d'appeler provider.initialize()
       
       _updateLocalState(provider);
       _isInitialized = true;
@@ -73,7 +73,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
   Future<void> _refreshFavorites() async {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    await provider.initialize();
+    // Rafraîchir les universités seulement, les publicités se rafraîchissent automatiquement
+    await provider.refreshUniversities();
     _updateLocalState(provider);
   }
 

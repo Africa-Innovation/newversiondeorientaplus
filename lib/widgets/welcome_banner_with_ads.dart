@@ -20,10 +20,18 @@ class WelcomeBannerWithAds extends StatelessWidget {
         // Obtenir les publicités du provider
         final advertisements = provider.advertisements;
         
+        // DEBUG: Log des publicités
+        debugPrint('🔍 WelcomeBanner: ${advertisements.length} publicités reçues du provider');
+        for (var ad in advertisements) {
+          debugPrint('   - ${ad.title}: ${ad.imageUrl}');
+        }
+        
         // Extraire les URLs des images des publicités FIREBASE uniquement
         final List<String> adImageUrls = advertisements.isNotEmpty 
             ? advertisements.map((ad) => ad.imageUrl).toList()
             : []; // Pas de fallback assets - utiliser uniquement Firebase
+            
+        debugPrint('🎯 WelcomeBanner: ${adImageUrls.length} URLs d\'images pour le carousel');
 
         return Container(
           margin: const EdgeInsets.all(16),

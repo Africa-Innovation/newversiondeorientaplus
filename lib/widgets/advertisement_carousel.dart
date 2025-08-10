@@ -43,7 +43,48 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(AdvertisementCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Si la liste des URLs a changé, redémarrer le carousel
+    if (oldWidget.imageUrls != widget.imageUrls) {
+      print('🔄 Carousel: Mise à jour détectée - ${oldWidget.imageUrls.length} -> ${widget.imageUrls.length} images');
+      
+      // Arrêter l'ancien timer
+      _timer?.cancel();
+      
+      // Réinitialiser la page courante si nécessaire
+      if (widget.imageUrls.isEmpty) {
+        _currentPage = 0;
+      } else if (_currentPage >= widget.imageUrls.length) {
+        _currentPage = 0;
+        // Retourner à la première page si on était au-delà
+        if (_pageController.hasClients) {
+          _pageController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+      
+      // Redémarrer l'auto-play avec la nouvelle liste
+      if (widget.imageUrls.length > 1) {
+        _startAutoPlay();
+      }
+    }
+  }
+
   void _startAutoPlay() {
+    // Arrêter l'ancien timer s'il existe
+    _timer?.cancel();
+    
+    // Ne démarrer que s'il y a plus d'une image
+    if (widget.imageUrls.length <= 1) {
+      return;
+    }
+    
     _timer = Timer.periodic(widget.autoPlayInterval, (timer) {
       if (mounted && widget.imageUrls.isNotEmpty) {
         int nextPage = (_currentPage + 1) % widget.imageUrls.length;
@@ -54,6 +95,8 @@ class _AdvertisementCarouselState extends State<AdvertisementCarousel> {
         );
       }
     });
+    
+    print('▶️ Carousel: Auto-play démarré pour ${widget.imageUrls.length} images');
   }
 
   void _stopAutoPlay() {
