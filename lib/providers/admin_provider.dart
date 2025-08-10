@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/university.dart';
 import '../services/firebase_university_service.dart';
 
@@ -7,11 +8,13 @@ class AdminProvider with ChangeNotifier {
   List<University> _adminUniversities = [];
   bool _isLoading = false;
   String? _error;
+  int _userCount = 0;
 
   // Getters
   List<University> get adminUniversities => _adminUniversities;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get userCount => _userCount;
 
   /// Charger toutes les universités depuis Firebase pour l'administration
   Future<void> loadAdminUniversities() async {
@@ -27,6 +30,9 @@ class AdminProvider with ChangeNotifier {
       
       _adminUniversities = firebaseUniversities;
       print('✅ AdminProvider: ${_adminUniversities.length} universités totales chargées');
+
+      // Charger aussi le nombre d'utilisateurs
+      await _loadUserCount();
       
     } catch (e) {
       _error = 'Erreur lors du chargement des universités: $e';
@@ -34,6 +40,19 @@ class AdminProvider with ChangeNotifier {
       debugPrint(e.toString());
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Charger le nombre d'utilisateurs depuis Firebase
+  Future<void> _loadUserCount() async {
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final QuerySnapshot usersSnapshot = await firestore.collection('users').get();
+      _userCount = usersSnapshot.docs.length;
+      print('✅ AdminProvider: ${_userCount} utilisateurs trouvés');
+    } catch (e) {
+      print('❌ AdminProvider: Erreur lors du chargement des utilisateurs: $e');
+      _userCount = 0;
     }
   }
 

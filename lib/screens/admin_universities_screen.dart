@@ -277,22 +277,54 @@ class _AdminUniversitiesScreenState extends State<AdminUniversitiesScreen> {
                             Icons.school,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: _buildStatCard(
                             'Publiques',
-                            universities.where((u) => u.type == 'Publique').length.toString(),
+                            universities.where((u) => u.type == 'public').length.toString(),
                             Icons.account_balance,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: _buildStatCard(
                             'Privées',
-                            universities.where((u) => u.type == 'Privée').length.toString(),
+                            universities.where((u) => u.type == 'private').length.toString(),
                             Icons.business,
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Centres',
+                            universities.where((u) => u.type == 'formation_center').length.toString(),
+                            Icons.business_center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Utilisateurs',
+                            adminProvider.userCount.toString(),
+                            Icons.people,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Programmes',
+                            universities.fold<int>(0, (total, u) => total + u.programs.length).toString(),
+                            Icons.menu_book,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Container()), // Espace vide
+                        const SizedBox(width: 8),
+                        Expanded(child: Container()), // Espace vide
                       ],
                     ),
                   ],
